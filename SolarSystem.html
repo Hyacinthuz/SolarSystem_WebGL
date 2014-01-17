@@ -4,6 +4,7 @@
 		<meta charset="UTF-8">
 		<title>SolarSystem</title>
 		<script src="three.js"></script>
+		<script src="sun.js"></script>
 		<style type="text/css">
 			div#canvas-frame{
 				border-style: solid;
@@ -100,7 +101,7 @@
 			var numofobj = 10;
 			function Planet(objname, textname, rad, cent, dist, t_revolution, t_rotation){
 				this.objectname = objname;
-				this.textfilename = textname;
+				this.textfilename = "images/" + textname;
 				this.radius = rad;
 				this.center = cent;
 				this.distance = dist
