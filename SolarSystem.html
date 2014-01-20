@@ -4,7 +4,6 @@
 		<meta charset="UTF-8">
 		<title>SolarSystem</title>
 		<script src="three.js"></script>
-		<script src="sun.js"></script>
 		<style type="text/css">
 			div#canvas-frame{
 				border-style: solid;
@@ -164,15 +163,25 @@
 			//消除不同浏览器滚轮事件差异。
 			var mouseScroll = function(fn){
 				var roll = function(e){
-			    	var delta = 0;
-			    	e = e || renderer.domElement.event;
-			    	delta = (e.wheelDelta) ? e.wheelDelta / 120 : -(e.detail || 0) / 3;
-			    	fn(delta);//回调函数中的回调函数
-			  	}
-			  	if( renderer.domElement.netscape ){
-			    	renderer.domElement.addEventListener('DOMMouseScroll', roll, false);
-			  	}
-			  	else{
+					var delta = 0;
+					e = e || renderer.domElement.event;
+					delta = (e.wheelDelta) ? e.wheelDelta / 120 : -(e.detail || 0) / 3;
+					fn(delta);//回调函数中的回调函数
+					if(e.preventDefault) {
+						// Firefox
+						e.preventDefault();
+						e.stopPropagation();
+					} else {
+						// IE
+						e.cancelBubble=true;
+						e.returnValue = false;
+					}
+					return false;
+				}
+				if( renderer.domElement.netscape ){
+					renderer.domElement.addEventListener('DOMMouseScroll', roll, false);
+				}
+				else{
 					renderer.domElement.onmousewheel = roll;
 				}
 			}
@@ -282,7 +291,6 @@
 				renderer.domElement.addEventListener('mousemove', onMouseMove, false);
 				renderer.domElement.addEventListener('mouseup', onMouseUp, false);
 			}
-			var projector;
 		  	function threeStart(){
 		    	initThree();
 		    	camera = new THREE.PerspectiveCamera( 25, width/height, dist_cam_n, dist_cam_f);
@@ -292,12 +300,11 @@
 		    	tracedTarget = planet[0].object;
 		    	initCamera();
 		    	initMouseWheel();
-		    	initDrag();
-		    	loop();
-		  	}
+				initDrag();
+				loop();
+			}
 		</script>
-	</head>
- 
+	</head> 
 	<body onload="threeStart();">
 		<div id= "stats">States</div>
 		<div id="canvas-frame"></div>
