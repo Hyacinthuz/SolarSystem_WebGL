@@ -17,56 +17,16 @@
 		</style>
 		<script>
 			var renderer;
-			function initThree() {
-				width = document.getElementById('canvas-frame').clientWidth;
-				height = document.getElementById('canvas-frame').clientHeight; 
+			var widthOfScene;
+			var heightOfScene;
+			function initRender() {
+				widthOfScene = document.getElementById('canvas-frame').clientWidth;
+				heightOfScene = document.getElementById('canvas-frame').clientHeight; 
 				renderer = new THREE.WebGLRenderer({antialias: true});
-				renderer.setSize(width, height );
+				renderer.setSize(widthOfScene, heightOfScene );
 				document.getElementById('canvas-frame').appendChild(renderer.domElement);
 				renderer.setClearColorHex(0x000000, 1.0);
 			}
-			var dist_cam_f = 15000;
-			var dist_cam_n = 100;
-			var camposi_basic = new THREE.Vector3(0, 0, 0);
-			var zoom = 70;
-		  	var camera;
-		  	var trace = false;
-			var tracedTarget;
-			var tracedPlanet;
-			function initCamera(){
-				tracedPlanet = getPlanetByObject(tracedTarget);
-				camera.up.set(0, 1, 0);
-				if(trace){
-					zoom = 5;
-					thetaMove_traced = 0;
-					alphaMove_traced = 0;
-				}
-				else{
-					zoom = 70;
-				}
-				setCamera();
-			}
-			var thetaMove_traced = 0;
-			var alphaMove_traced = 0;
-			var thetaMove_whole = 0;
-			var alphaMove_whole = 0;
-		  	function setCamera(){
-		  		tracedTarget.geometry.computeBoundingSphere();
-				var theta_revol = count/tracedPlanet.t_revol * speedscalar;					
-		  		if(trace){
-		  			camposi_basic.x = tracedTarget.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.cos(theta_revol - thetaMove_traced);
-					camposi_basic.y = tracedTarget.geometry.boundingSphere.radius * Math.sin(alphaMove_traced);
-					camposi_basic.z = tracedTarget.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.sin(thetaMove_traced - theta_revol);
-				}
-				else{
-					camposi_basic.x = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.cos(theta_revol - thetaMove_whole);
-					camposi_basic.y = tracedTarget.geometry.boundingSphere.radius * Math.sin(Math.PI/2 + alphaMove_whole);
-					camposi_basic.z = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.sin(thetaMove_whole - theta_revol);
-					console.log();
-				}
-				camera.position.set(tracedTarget.position.x + camposi_basic.x * zoom, tracedTarget.position.y + camposi_basic.y * zoom, tracedTarget.position.z + camposi_basic.z * zoom);
-				camera.lookAt({x: tracedTarget.position.x, y: tracedTarget.position.y, z: tracedTarget.position.z});
-			}			
 		  	var scene;
 		  	function initScene() {
 				scene = new THREE.Scene();
@@ -112,8 +72,8 @@
 
 				this.circle = makecircle(this);//new THREE.Line(new THREE.CircleGeometry(this.distance, this.distance), new THREE.MeshLambertMaterial({color: 0x808080}), THREE.LinePieces);
 			}
-			var planet;			
-			function initObject(){
+			var planet;
+			function initPlanet(){
 				planet = new Array( 
 				//         objname, 	textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation
 				new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		10000, 			10000),
@@ -126,11 +86,14 @@
 				new Planet("saturn", 	"saturnmap.jpg", 	90, 	"sun", 		1100, 	29.448*365/20,	0.44401*500),
 				new Planet("uranus", 	"uranusmap.jpg", 	30, 	"sun", 		1400, 	164.79*365/80,	0.67125*500),
 				new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		1500, 	247.92*365/100, 0.2488*500)
-				);	
+				);
 				for(i = 0; i <numofobj; i++){
 					scene.add(planet[i].object);
 					scene.add(planet[i].circle);
-				}
+				}	
+			}			
+			function initObject(){
+				initPlanet();				
 			}
 			function getPlanetByObject(obj){
 				for(i = 0; i<numofobj; i++)
@@ -138,27 +101,41 @@
 						return planet[i];
 				return null;
 			}
-			var count=0;
-			var speedscalar = 2;
-			function loop(){
-				var distance;
-				var center;
-				var theta_revol;
-				var theta_rota;
-				count++;
-				for(i=0; i<numofobj; i++){
-				theta_revol = count/planet[i].t_revol * speedscalar;
-				theta_rota = count/planet[i].t_rota * speedscalar;
-					planet[i].object.rotation.set(0, theta_rota, 0);
-					center = scene.getObjectById(planet[i].center, true); 		
-					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol) + center.position.x, center.position.y, planet[i].distance * Math.sin(-theta_revol) + center.position.z);
-					//planet[i].circle.rotation.x = Math.PI/2;
-					planet[i].circle.position.set(center.position.x, center.position.y, center.position.z);
-				}				
+			var dist_cam_f = 15000;
+			var dist_cam_n = 100;
+			var camposi_basic = new THREE.Vector3(0, 0, 0);
+			var zoom = 70;
+		  	var camera;
+		  	var trace = false;
+			var tracedTarget;
+			var tracedPlanet;
+			function initCamera(){
+				camera = new THREE.PerspectiveCamera( 25, widthOfScene/heightOfScene, dist_cam_n, dist_cam_f);
+				camera.up.set(0, 1, 0);
+				tracedTarget = planet[0].object;
+				tracedPlanet = getPlanetByObject(tracedTarget);
 				setCamera();
-				renderer.clear();
-			    renderer.render(scene, camera);
-				window.requestAnimationFrame(loop);
+			}
+			var thetaMove_traced = 0;
+			var alphaMove_traced = 0;
+			var thetaMove_whole = 0;
+			var alphaMove_whole = 0;
+		  	function setCamera(){
+		  		var theta_revol = count/tracedPlanet.t_revol * speedscalar;					
+		  		if(trace){
+		  			
+		  			camposi_basic.x = tracedTarget.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.cos(theta_revol - thetaMove_traced);
+					camposi_basic.y = tracedTarget.geometry.boundingSphere.radius * Math.sin(alphaMove_traced);
+					camposi_basic.z = tracedTarget.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.sin(thetaMove_traced - theta_revol);
+				}
+				else{
+					camposi_basic.x = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.cos(theta_revol - thetaMove_whole);
+					camposi_basic.y = tracedTarget.geometry.boundingSphere.radius * Math.sin(Math.PI/2 + alphaMove_whole);
+					camposi_basic.z = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.sin(thetaMove_whole - theta_revol);
+					console.log();
+				}
+				camera.position.set(tracedTarget.position.x + camposi_basic.x * zoom, tracedTarget.position.y + camposi_basic.y * zoom, tracedTarget.position.z + camposi_basic.z * zoom);
+				camera.lookAt({x: tracedTarget.position.x, y: tracedTarget.position.y, z: tracedTarget.position.z});
 			}
 			//消除不同浏览器滚轮事件差异。
 			var mouseScroll = function(fn){
@@ -251,13 +228,19 @@
 										+ 'position: (' + target.position.x +', ' + target.position.y + ', ' + target.position.z + ')';
 										if(target == tracedTarget && trace){
 											trace = false;
+											zoom = 70;
 											tracedTarget = planet[0].object;
 										}
 										else{
 											trace = true;
+											zoom = 5;
+											thetaMove_traced = 0;
+											alphaMove_traced = 0;
 											tracedTarget = target;
 										}
-										initCamera();
+										tracedPlanet = getPlanetByObject(tracedTarget);
+										tracedTarget.geometry.computeBoundingSphere();				
+										setCamera();
 										return 0;
 									}
 								}
@@ -291,15 +274,35 @@
 				renderer.domElement.addEventListener('mousemove', onMouseMove, false);
 				renderer.domElement.addEventListener('mouseup', onMouseUp, false);
 			}
-		  	function threeStart(){
-		    	initThree();
-		    	camera = new THREE.PerspectiveCamera( 25, width/height, dist_cam_n, dist_cam_f);
-		    	initScene();   
-		    	initLight();
-		    	initObject();
-		    	tracedTarget = planet[0].object;
-		    	initCamera();
-		    	initMouseWheel();
+			var count=0;
+			var speedscalar = 2;
+			function loop(){
+				var distance;
+				var center;
+				var theta_revol;
+				var theta_rota;
+				count++;
+				for(i=0; i<numofobj; i++){
+				theta_revol = count/planet[i].t_revol * speedscalar;
+				theta_rota = count/planet[i].t_rota * speedscalar;
+					planet[i].object.rotation.set(0, theta_rota, 0);
+					center = scene.getObjectById(planet[i].center, true); 		
+					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol) + center.position.x, center.position.y, planet[i].distance * Math.sin(-theta_revol) + center.position.z);
+					//planet[i].circle.rotation.x = Math.PI/2;
+					planet[i].circle.position.set(center.position.x, center.position.y, center.position.z);
+				}				
+				setCamera();
+				renderer.clear();
+				renderer.render(scene, camera);
+				window.requestAnimationFrame(loop);
+			}
+			function threeStart(){
+				initRender();
+				initScene();
+				initLight();
+				initObject();
+				initCamera();
+				initMouseWheel();
 				initDrag();
 				loop();
 			}
