@@ -137,42 +137,38 @@
 				camera.position.set(tracedTarget.position.x + camposi_basic.x * zoom, tracedTarget.position.y + camposi_basic.y * zoom, tracedTarget.position.z + camposi_basic.z * zoom);
 				camera.lookAt({x: tracedTarget.position.x, y: tracedTarget.position.y, z: tracedTarget.position.z});
 			}
-			//消除不同浏览器滚轮事件差异。
-			var mouseScroll = function(fn){
-				var roll = function(e){
-					var delta = 0;
-					e = e || renderer.domElement.event;
-					delta = (e.wheelDelta) ? e.wheelDelta / 120 : -(e.detail || 0) / 3;
-					fn(delta);//回调函数中的回调函数
-					if(e.preventDefault) {
-						// Firefox
-						e.preventDefault();
-						e.stopPropagation();
-					} else {
-						// IE
-						e.cancelBubble=true;
-						e.returnValue = false;
-					}
-					return false;
-				}
-				if( renderer.domElement.netscape ){
-					renderer.domElement.addEventListener('DOMMouseScroll', roll, false);
-				}
-				else{
-					renderer.domElement.onmousewheel = roll;
-				}
-			}
-			//编写鼠标滚轮事件。
-			function initMouseWheel(){
-				mouseScroll(function(delta){
-					if(zoom - delta <= 80 && zoom - delta > 5) zoom -= delta;
-				});
-			}
+			//屏幕坐标与canvas-frame坐标转换
 			var cor_Transform = new THREE.Vector2();
 			function corTransform(x, y){
 				cor_Transform.x = (( x - document.getElementById('canvas-frame').getBoundingClientRect().left)/ document.getElementById('canvas-frame').clientWidth ) * 2 - 1;
 				cor_Transform.y = -(( y - document.getElementById('canvas-frame').getBoundingClientRect().top)/ document.getElementById('canvas-frame').clientHeight ) * 2 + 1;
-					
+			}
+			//编写鼠标滚轮事件。
+			var onMouseWheel = function(ev){
+				var delta = 0;
+				//消除不同浏览器滚轮事件差异。
+				ev = ev || renderer.domElement.event;
+				delta = (ev.wheelDelta) ? ev.wheelDelta / 120 : -(ev.detail || 0) / 3;
+				if(zoom - delta <= 80 && zoom - delta > 5) zoom -= delta;			
+				//禁止默认鼠标事件
+				if(ev.preventDefault) {
+					// Firefox
+					ev.preventDefault();
+					ev.stopPropagation();
+				} else {
+					// IE
+					ev.cancelBubble=true;
+					ev.returnValue = false;
+				}
+				return false;
+			}
+			function initMouseWheel(){
+				if( renderer.domElement.netscape ){
+					renderer.domElement.addEventListener('DOMMouseScroll', onMouseWheel, false);
+				}
+				else{
+					renderer.domElement.onmousewheel = onMouseWheel;
+				}
 			}
 			var down = false;
 			var lastMouseposi = new THREE.Vector2();
@@ -218,7 +214,7 @@
 							// been "hit" by the ray, and the object to which that
 							// face belongs. We only care for the object itself.
 							var planetClicked = new Boolean(0);
-							for(i = 0; i<intersects.length; i++){							
+							for(i = 0; i<intersects.length; i++){
 								for(j = 0; j<numofobj; j++){
 									if(intersects[i].object == planet[j].object){
 										target = intersects[i].object;
