@@ -19,12 +19,14 @@
 			var renderer;
 			var widthOfScene;
 			var heightOfScene;
+			var element_canvas;
 			function initRender() {
-				widthOfScene = document.getElementById('canvas-frame').clientWidth;
-				heightOfScene = document.getElementById('canvas-frame').clientHeight; 
+				element_canvas = document.getElementById('canvas-frame');
+				widthOfScene = element_canvas.clientWidth;
+				heightOfScene = element_canvas.clientHeight; 
 				renderer = new THREE.WebGLRenderer({antialias: true});
 				renderer.setSize(widthOfScene, heightOfScene );
-				document.getElementById('canvas-frame').appendChild(renderer.domElement);
+				element_canvas.appendChild(renderer.domElement);
 				renderer.setClearColorHex(0x000000, 1.0);
 			}
 		  	var scene;
@@ -47,7 +49,6 @@
 				var resolution = object.distance;
 				var amplitude = object.distance;
 				var size = 360/resolution;
-
 				var geometry = new THREE.Geometry();
 				var material = new THREE.LineBasicMaterial( { color: 0x404040, opacity: 1.0} );
 				for(var i = 0; i <= resolution; i++) {
@@ -57,7 +58,6 @@
 				var line = new THREE.Line( geometry, material, THREE.LineStrip );//LinePieces
 				return line;
 		  	}
-			var numofobj = 10;
 			function Planet(objname, textname, rad, cent, dist, t_revolution, t_rotation){
 				this.objectname = objname;
 				this.textfilename = "images/" + textname;
@@ -73,6 +73,7 @@
 				this.circle = makecircle(this);//new THREE.Line(new THREE.CircleGeometry(this.distance, this.distance), new THREE.MeshLambertMaterial({color: 0x808080}), THREE.LinePieces);
 			}
 			var planet;
+			var numofobj = 10;
 			function initPlanet(){
 				planet = new Array( 
 				//         objname, 	textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation
@@ -132,7 +133,7 @@
 					camposi_basic.x = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.cos(theta_revol - thetaMove_whole);
 					camposi_basic.y = tracedTarget.geometry.boundingSphere.radius * Math.sin(Math.PI/2 + alphaMove_whole);
 					camposi_basic.z = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.sin(thetaMove_whole - theta_revol);
-					console.log();
+					//console.log();
 				}
 				camera.position.set(tracedTarget.position.x + camposi_basic.x * zoom, tracedTarget.position.y + camposi_basic.y * zoom, tracedTarget.position.z + camposi_basic.z * zoom);
 				camera.lookAt({x: tracedTarget.position.x, y: tracedTarget.position.y, z: tracedTarget.position.z});
@@ -140,8 +141,8 @@
 			//屏幕坐标与canvas-frame坐标转换
 			var cor_Transform = new THREE.Vector2();
 			function corTransform(x, y){
-				cor_Transform.x = (( x - document.getElementById('canvas-frame').getBoundingClientRect().left)/ document.getElementById('canvas-frame').clientWidth ) * 2 - 1;
-				cor_Transform.y = -(( y - document.getElementById('canvas-frame').getBoundingClientRect().top)/ document.getElementById('canvas-frame').clientHeight ) * 2 + 1;
+				cor_Transform.x = (( x - element_canvas.getBoundingClientRect().left)/ element_canvas.clientWidth ) * 2 - 1;
+				cor_Transform.y = -(( y - element_canvas.getBoundingClientRect().top)/ element_canvas.clientHeight ) * 2 + 1;
 			}
 			//编写鼠标滚轮事件。
 			var onMouseWheel = function(ev){
