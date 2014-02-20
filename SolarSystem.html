@@ -58,8 +58,8 @@
 				var line = new THREE.Line( geometry, material, THREE.LineStrip );//LinePieces
 				return line;
 		  	}
-			function Planet(objname, textname, rad, cent, dist, t_revolution, t_rotation){
-				this.objectname = objname;
+			function Planet(planetname, textname, rad, cent, dist, t_revolution, t_rotation){
+				this.planetname = planetname;
 				this.textfilename = "images/" + textname;
 				this.radius = rad;
 				this.center = cent;
@@ -67,40 +67,34 @@
 				this.t_revol = t_revolution;
 				this.t_rota = t_rotation;
 				this.object = new THREE.Mesh(new THREE.SphereGeometry( this.radius, this.radius, this.radius ), new THREE.MeshLambertMaterial({map: new THREE.ImageUtils.loadTexture(this.textfilename)}));
-				this.object.name = this.objectname;
-				this.object.id = this.objectname;
-
-				this.circle = makecircle(this);//new THREE.Line(new THREE.CircleGeometry(this.distance, this.distance), new THREE.MeshLambertMaterial({color: 0x808080}), THREE.LinePieces);
+				this.object.name = planetname;
+				this.object.id = planetname;
+				this.circle = {
+					object : makecircle(this),//new THREE.Line(new THREE.CircleGeometry(this.distance, this.distance), new THREE.MeshLambertMaterial({color: 0x808080}), THREE.LinePieces);
+					name : planetname,
+				};
 			}
 			var planet;
-			var numofobj = 10;
 			function initPlanet(){
-				planet = new Array( 
-				//         objname, 	textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation
-				new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		10000, 			10000),
-				new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		200, 	87.97*2, 		58.646),
-				new Planet("venus", 	"venusmap.jpg", 	30, 	"sun", 		300, 	224.7, 			-243),
-				new Planet("earth", 	"earthmap.jpg", 	50, 	"sun", 		450, 	365, 			0.99727*200),
-				new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	120, 	29.53, 			29.53),
-				new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		650, 	686.93/2, 	1.0260*200),
-				new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		800, 	11.5856*365/10,	0.41354*500),
-				new Planet("saturn", 	"saturnmap.jpg", 	90, 	"sun", 		1100, 	29.448*365/20,	0.44401*500),
-				new Planet("uranus", 	"uranusmap.jpg", 	30, 	"sun", 		1400, 	164.79*365/80,	0.67125*500),
-				new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		1500, 	247.92*365/100, 0.2488*500)
-				);
-				for(i = 0; i <numofobj; i++){
+				planet = new Array();
+				//   				      	 objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation
+				planet["sun"] 	= new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		10000, 			10000);
+				planet["mercury"] = new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		200, 	87.97*2, 		58.646);
+				planet["venus"] 	= new Planet("venus", 	"venusmap.jpg", 	30, 	"sun", 		300, 	224.7, 			-243);
+				planet["earth"] 	= new Planet("earth", 	"earthmap.jpg", 	50, 	"sun", 		450, 	365, 			0.99727*200);
+				planet["moon"] 	= new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	120, 	29.53, 			29.53);
+				planet["mars"] 	= new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		650, 	686.93/2, 	1.0260*200);
+				planet["jupiter"] = new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		800, 	11.5856*365/10,	0.41354*500);
+				planet["saturn"] 	= new Planet("saturn", 	"saturnmap.jpg", 	90, 	"sun", 		1100, 	29.448*365/20,	0.44401*500);
+				planet["uranus"] 	= new Planet("uranus", 	"uranusmap.jpg", 	30, 	"sun", 		1400, 	164.79*365/80,	0.67125*500);
+				planet["neptune"] = new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		1500, 	247.92*365/100, 0.2488*500);
+				for(i in planet){
 					scene.add(planet[i].object);
-					scene.add(planet[i].circle);
+					scene.add(planet[i].circle.object);
 				}	
 			}			
 			function initObject(){
 				initPlanet();				
-			}
-			function getPlanetByObject(obj){
-				for(i = 0; i<numofobj; i++)
-					if(planet[i].object == obj) 
-						return planet[i];
-				return null;
 			}
 			var dist_cam_f = 15000;
 			var dist_cam_n = 100;
@@ -108,13 +102,13 @@
 			var zoom = 70;
 		  	var camera;
 		  	var trace = false;
-			var tracedTarget;
+			var tracedObject;
 			var tracedPlanet;
 			function initCamera(){
 				camera = new THREE.PerspectiveCamera( 25, widthOfScene/heightOfScene, dist_cam_n, dist_cam_f);
 				camera.up.set(0, 1, 0);
-				tracedTarget = planet[0].object;
-				tracedPlanet = getPlanetByObject(tracedTarget);
+				tracedObject = planet["sun"].object;
+				tracedPlanet = planet["sun"];
 				setCamera();
 			}
 			var thetaMove_traced = 0;
@@ -125,18 +119,18 @@
 		  		var theta_revol = count/tracedPlanet.t_revol * speedscalar;					
 		  		if(trace){
 		  			
-		  			camposi_basic.x = tracedTarget.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.cos(theta_revol - thetaMove_traced);
-					camposi_basic.y = tracedTarget.geometry.boundingSphere.radius * Math.sin(alphaMove_traced);
-					camposi_basic.z = tracedTarget.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.sin(thetaMove_traced - theta_revol);
+		  			camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.cos(theta_revol - thetaMove_traced);
+					camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(alphaMove_traced);
+					camposi_basic.z = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.sin(thetaMove_traced - theta_revol);
 				}
 				else{
-					camposi_basic.x = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.cos(theta_revol - thetaMove_whole);
-					camposi_basic.y = tracedTarget.geometry.boundingSphere.radius * Math.sin(Math.PI/2 + alphaMove_whole);
-					camposi_basic.z = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.sin(thetaMove_whole - theta_revol);
+					camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.cos(theta_revol - thetaMove_whole);
+					camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(Math.PI/2 + alphaMove_whole);
+					camposi_basic.z = tracedObject.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.sin(thetaMove_whole - theta_revol);
 					//console.log();
 				}
-				camera.position.set(tracedTarget.position.x + camposi_basic.x * zoom, tracedTarget.position.y + camposi_basic.y * zoom, tracedTarget.position.z + camposi_basic.z * zoom);
-				camera.lookAt({x: tracedTarget.position.x, y: tracedTarget.position.y, z: tracedTarget.position.z});
+				camera.position.set(tracedObject.position.x + camposi_basic.x * zoom, tracedObject.position.y + camposi_basic.y * zoom, tracedObject.position.z + camposi_basic.z * zoom);
+				camera.lookAt({x: tracedObject.position.x, y: tracedObject.position.y, z: tracedObject.position.z});
 			}
 			//屏幕坐标与canvas-frame坐标转换
 			var cor_Transform = new THREE.Vector2();
@@ -216,27 +210,27 @@
 							// face belongs. We only care for the object itself.
 							var planetClicked = new Boolean(0);
 							for(i = 0; i<intersects.length; i++){
-								for(j = 0; j<numofobj; j++){
+								for(j in planet){
 									if(intersects[i].object == planet[j].object){
 										target = intersects[i].object;
 										document.getElementById('stats').innerHTML = 'Name: ' + target.name
 										+ '<br>'
 										+ 'ID: ' + target.id + '<br>'
 										+ 'position: (' + target.position.x +', ' + target.position.y + ', ' + target.position.z + ')';
-										if(target == tracedTarget && trace){
+										if(target == tracedObject && trace){
 											trace = false;
 											zoom = 70;
-											tracedTarget = planet[0].object;
+											tracedObject = planet[0].object;
 										}
 										else{
 											trace = true;
 											zoom = 5;
 											thetaMove_traced = 0;
 											alphaMove_traced = 0;
-											tracedTarget = target;
+											tracedObject = target;
 										}
-										tracedPlanet = getPlanetByObject(tracedTarget);
-										tracedTarget.geometry.computeBoundingSphere();				
+										tracedPlanet = planet[tracedObject.name];
+										tracedObject.geometry.computeBoundingSphere();				
 										setCamera();
 										return 0;
 									}
@@ -279,14 +273,14 @@
 				var theta_revol;
 				var theta_rota;
 				count++;
-				for(i=0; i<numofobj; i++){
+				for(i in planet){
 				theta_revol = count/planet[i].t_revol * speedscalar;
 				theta_rota = count/planet[i].t_rota * speedscalar;
 					planet[i].object.rotation.set(0, theta_rota, 0);
 					center = scene.getObjectById(planet[i].center, true); 		
 					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol) + center.position.x, center.position.y, planet[i].distance * Math.sin(-theta_revol) + center.position.z);
-					//planet[i].circle.rotation.x = Math.PI/2;
-					planet[i].circle.position.set(center.position.x, center.position.y, center.position.z);
+					//planet[i].circle.object.rotation.x = Math.PI/2;
+					planet[i].circle.object.position.set(center.position.x, center.position.y, center.position.z);
 				}				
 				setCamera();
 				renderer.clear();
