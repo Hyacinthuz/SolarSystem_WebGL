@@ -75,15 +75,15 @@
 				switch(axis)
 				{
 					case 'x':
-						axisMesh.rotation.set(0, 0, Math.PI/2);
+						axisMesh.rotation.set(0, 0, Math.PI/2, 'XYZ');
 						axisMesh.material.color = new THREE.Color(0xFF0000);
 						break;
 					case 'y':
-						axisMesh.rotation.set(0, 0, 0);
+						axisMesh.rotation.set(0, 0, 0, 'XYZ');
 						axisMesh.material.color = new THREE.Color(0x00FF00);
 						break;
 					case 'z':
-						axisMesh.rotation.set(Math.PI/2, 0, 0);
+						axisMesh.rotation.set(Math.PI/2, 0, 0, 'XYZ');
 						axisMesh.material.color = new THREE.Color(0x0000FF);
 						break;
 					default :
@@ -111,41 +111,45 @@
 				}
 			}
 			var planet;
+			var tilt_earth = 23.26/90*Math.PI/2;
 			function initPlanet(){
 				planet = new Array();
-				//   				      	 	objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation
-				planet["sun"] 		= new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		100000, 			1000000);
-				planet["mercury"] 	= new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		200, 	87.97*2, 		58.646);
-				planet["venus"] 	= new Planet("venus", 		"venusmap.jpg", 	30, 	"sun", 		300, 	224.7, 			-243);
-				planet["earth"] 	= new Planet("earth", 		"earthmap.jpg", 	50, 	"sun", 		450, 	365, 			0.99727*200);
-				planet["moon"] 		= new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	120, 	29.53, 			29.53);
-				planet["mars"] 		= new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		650, 	686.93/2, 		1.0260*200);
-				planet["jupiter"] 	= new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		800, 	11.5856*365/10,	0.41354*500);
-				planet["saturn"] 	= new Planet("saturn", 		"saturnmap.jpg", 	90, 	"sun", 		1100, 	29.448*365/20,	0.44401*500);
-				planet["uranus"] 	= new Planet("uranus", 		"uranusmap.jpg", 	30, 	"sun", 		1400, 	164.79*365/80,	0.67125*500);
-				planet["neptune"] 	= new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		1500, 	247.92*365/100, 0.2488*500);
+				//   				      	 	objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation， Axial tilt
+				planet["sun"] 		= new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		100000, 		1000000		 7.25);
+				planet["mercury"] 	= new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		200, 	87.97*2, 		58.646		 0);
+				planet["venus"] 	= new Planet("venus", 		"venusmap.jpg", 	30, 	"sun", 		300, 	224.7, 			-243		 177.36);
+				planet["earth"] 	= new Planet("earth", 		"earthmap.jpg", 	50, 	"sun", 		450, 	365, 			0.99727*200	 23.26);
+				planet["moon"] 		= new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	120, 	29.53, 			29.53		 6.68);
+				planet["mars"] 		= new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		650, 	686.93/2, 		1.0260*200	 25.19);
+				planet["jupiter"] 	= new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		800, 	11.5856*365/10,	0.41354*500	 3.13);
+				planet["saturn"] 	= new Planet("saturn", 		"saturnmap.jpg", 	90, 	"sun", 		1100, 	29.448*365/20,	0.44401*500	 26.73);
+				planet["uranus"] 	= new Planet("uranus", 		"uranusmap.jpg", 	30, 	"sun", 		1400, 	164.79*365/80,	0.67125*500	 97.77);
+				planet["neptune"] 	= new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		1500, 	247.92*365/100, 0.2488*500	 28.32);	
 				for(i in planet){
 					scene.add(planet[i].object);
 					scene.add(planet[i].circle);
-					scene.add(planet[i].axis.x);
-					planet[i].axis.x.position.x += planet[i].radius;
-					scene.add(planet[i].axis.y);
-					planet[i].axis.y.position.y += planet[i].radius;
-					scene.add(planet[i].axis.z);
-					planet[i].axis.z.position.z += planet[i].radius;
-				}	
+					//scene.add(planet[i].axis.x);
+					//planet[i].axis.x.position.x += planet[i].radius;
+					//scene.add(planet[i].axis.y);
+					//planet[i].axis.y.position.y += planet[i].radius;
+					//scene.add(planet[i].axis.z);
+					//planet[i].axis.z.position.z += planet[i].radius;
+				}
+				var axisplanet = ["sun","earth","moon"];
+				for(i in axisplanet){
+					scene.add(planet[axisplanet[i]].axis.x);
+					planet[axisplanet[i]].axis.x.position.x += planet[axisplanet[i]].radius;
+					scene.add(planet[axisplanet[i]].axis.y);
+					planet[axisplanet[i]].axis.y.position.y += planet[axisplanet[i]].radius;
+					scene.add(planet[axisplanet[i]].axis.z);
+					planet[axisplanet[i]].axis.z.position.z += planet[axisplanet[i]].radius;
+				}
 			}			
 			function initObject(){
 				initPlanet();				
 			}
-			var dist_cam_f = 15000;
-			var dist_cam_n = 100;
-			var camposi_basic = new THREE.Vector3(0, 0, 0);
-			var zoom = 70;
-		  	var camera;
-		  	var trace = false;
-			var tracedObject;
-			var tracedPlanet;
+			var count=0;
+			var speedscalar = 2;
 			function setObject(){
 				var distance;
 				var centerobject;
@@ -155,7 +159,7 @@
 				for(i in planet){
 				theta_revol = count/planet[i].t_revol * speedscalar;
 				theta_rota = count/planet[i].t_rota * speedscalar;
-					planet[i].object.rotation.set(0, theta_rota, 0);
+					planet[i].object.rotation.set(planet[i].object.rotation.x, planet[i].object.rotation.y + theta_rota, planet[i].object.rotation.z, 'xzy');
 					centerobject = scene.getObjectById(planet[i].centerobject, true); 		
 					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, centerobject.position.y, planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
 					//planet[i].circle.rotation.x = Math.PI/2;
@@ -168,8 +172,13 @@
 					planet[i].axis.x.position.set(planet[i].radius + planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, centerobject.position.y, planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
 					planet[i].axis.y.position.set(planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, planet[i].radius + centerobject.position.y, planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
 					planet[i].axis.z.position.set(planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, centerobject.position.y, planet[i].radius + planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
-				}
+				}							
 			}
+			var camera;
+			var dist_cam_f = 15000;
+			var dist_cam_n = 100;
+			var tracedObject;
+			var tracedPlanet;
 			function initCamera(){
 				camera = new THREE.PerspectiveCamera( 25, widthOfScene/heightOfScene, dist_cam_n, dist_cam_f);
 				camera.up.set(0, 0, -1);
@@ -177,10 +186,13 @@
 				tracedPlanet = planet["sun"];
 				setCamera();
 			}
+			var trace = false;
+			var camposi_basic = new THREE.Vector3(0, 0, 0);
 			var thetaMove_traced = 0;//accumulated angle change of traced target view by mouse in zx plane
 			var alphaMove_traced = 0;//accumulated angle change of traced target view by mouse in xy plane
 			var thetaMove_global = 0;//accumulated angle change of global view by mouse in zx plane
 			var alphaMove_global = 0;//accumulated angle change of global view by mouse in xy plane
+			var zoom = 70;
 			function setCamera(){
 				var theta_rota_traced = count/tracedPlanet.t_rota * speedscalar;
 				//地球固连坐标系 Earth centered fixed coordinate frame
@@ -286,7 +298,6 @@
 							// object holds the intersection point, the face that's
 							// been "hit" by the ray, and the object to which that
 							// face belongs. We only care for the object itself.
-							var planetClicked = new Boolean(0);
 							for(i = 0; i<intersects.length; i++){
 								for(j in planet){
 									if(intersects[i].object == planet[j].object){
@@ -345,10 +356,14 @@
 				renderer.domElement.addEventListener('mousemove', onMouseMove, false);
 				renderer.domElement.addEventListener('mouseup', onMouseUp, false);
 			}
-			var count=0;
-			var speedscalar = 2;
+			var states_Simu = false;
+			function simulationState(){
+				states_Simu = !states_Simu;
+				if(states_Simu) document.getElementById('Statesofsimulation').innerHTML = "Stop Simulation";
+				else document.getElementById('Statesofsimulation').innerHTML = "Start Simulation";
+			}
 			function loop(){
-				setObject();
+				if(states_Simu)	setObject();
 				setCamera();
 				renderer.clear();
 				renderer.render(scene, camera);
@@ -362,12 +377,14 @@
 				initCamera();
 				initMouseWheel();
 				initDrag();
+				setObject();
 				loop();
 			}
 		</script>
 	</head> 
 	<body onload="threeStart();">
 		<div id= "stats">States</div>
+		<button id = "Statesofsimulation", onClick="simulationState()">Start Simulation</button>
 		<div id="canvas-frame"></div>
 	</body>
 </html>
