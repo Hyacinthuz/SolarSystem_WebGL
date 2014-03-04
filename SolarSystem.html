@@ -11,7 +11,7 @@
 				border-color: #AAAAAA;
 				cursor: move;
 				width: 1000px;
-				height: 650px;
+				height: 600px;
 				background-color: #FFFFFF;
 		}
 		</style>
@@ -92,7 +92,7 @@
 				}
 				return axisMesh;
 			}
-			function Planet(planetname, textname, rad, cent, dist, t_revolution, t_rotation, axialTilt){
+			function Planet(planetname, textname, rad, cent, dist, t_revolution, t_rotation, axialTilt, inittheta){
 				this.planetname = planetname;
 				this.textfilename = "images/" + textname;
 				this.radius = rad;
@@ -101,6 +101,7 @@
 				this.t_revol = t_revolution;
 				this.t_rota = t_rotation;
 				this.tilt = axialTilt;
+				this.theta_init = inittheta;
 				this.object = new THREE.Mesh(new THREE.SphereGeometry( this.radius, this.radius, this.radius ), new THREE.MeshLambertMaterial({map: new THREE.ImageUtils.loadTexture(this.textfilename)}));
 				this.object.name = planetname;
 				this.object.id = planetname;
@@ -119,17 +120,17 @@
 			var planet;
 			function initPlanet(){
 				planet = new Array();
-				//   				      	 	objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation， Axial tilt
-				planet["sun"] 		= new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		100000, 		1000000,	 7.25/90*Math.PI/2);
-				planet["mercury"] 	= new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		200, 	87.97*2, 		58.646,		 0/90*Math.PI/2);
-				planet["venus"] 	= new Planet("venus", 		"venusmap.jpg", 	30, 	"sun", 		300, 	224.7, 			-243,		 177.36/90*Math.PI/2);
-				planet["earth"] 	= new Planet("earth", 		"earthmap.jpg", 	50, 	"sun", 		450, 	365, 			0.99727*200, 23.26/90*Math.PI/2);
-				planet["moon"] 		= new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	120, 	29.53, 			29.53,		 6.68/90*Math.PI/2);
-				planet["mars"] 		= new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		650, 	686.93/2, 		1.0260*200,	 25.19/90*Math.PI/2);
-				planet["jupiter"] 	= new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		800, 	11.5856*365/10,	0.41354*500, 3.13/90*Math.PI/2);
-				planet["saturn"] 	= new Planet("saturn", 		"saturnmap.jpg", 	90, 	"sun", 		1100, 	29.448*365/20,	0.44401*500, 26.73/90*Math.PI/2);
-				planet["uranus"] 	= new Planet("uranus", 		"uranusmap.jpg", 	30, 	"sun", 		1400, 	164.79*365/80,	0.67125*500, 97.77/90*Math.PI/2);
-				planet["neptune"] 	= new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		1500, 	247.92*365/100, 0.2488*500,	 28.32/90*Math.PI/2);	
+				//   				      	 	objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation， Axial tilt    		theta_init
+				planet["sun"] 		= new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		100000, 		1000000,	 7.25/90*Math.PI/2,		0);
+				planet["mercury"] 	= new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		400, 	87.97/**2*/, 		58.646,		 0/90*Math.PI/2,		40/90*Math.PI/2);
+				planet["venus"] 	= new Planet("venus", 		"venusmap.jpg", 	30, 	"sun", 		600, 	224.7, 			-243,		 177.36/90*Math.PI/2,20/90*Math.PI/2);
+				planet["earth"] 	= new Planet("earth", 		"earthmap.jpg", 	50, 	"sun", 		900, 	365, 			0.99727/**200*/, 23.26/90*Math.PI/2,	-20/90*Math.PI/2);
+				planet["moon"] 		= new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	250, 	29.53, 			29.53,		 6.68/90*Math.PI/2,		190/90*Math.PI/2);
+				planet["mars"] 		= new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		1300, 	686.93/2, 		1.0260/**200*/,	 25.19/90*Math.PI/2,	5/90*Math.PI/2);
+				planet["jupiter"] 	= new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		1600, 	11.5856*365/*/10*/,	0.41354/**500*/, 3.13/90*Math.PI/2,		-65/90*Math.PI/2);
+				planet["saturn"] 	= new Planet("saturn", 		"saturnmap.jpg", 	90, 	"sun", 		2200, 	29.448*365/*/20*/,	0.44401/**500*/, 26.73/90*Math.PI/2,	45/90*Math.PI/2);
+				planet["uranus"] 	= new Planet("uranus", 		"uranusmap.jpg", 	30, 	"sun", 		2700, 	164.79*365/*/80*/,	0.67125/**500*/, 97.77/90*Math.PI/2,	190/90*Math.PI/2);
+				planet["neptune"] 	= new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		3000, 	247.92*365/*/100*/, 0.2488/**500*/,	 28.32/90*Math.PI/2,	150/90*Math.PI/2);	
 				for(i in planet){
 					scene.add(planet[i].object);
 					scene.add(planet[i].circle);
@@ -159,34 +160,35 @@
 			function initObject(){
 				initPlanet();				
 			}
-			var count=0;
-			var speedscalar = 2;
+			var count = 1;
+			var v_initspeed = 1
+			var speedscalar = v_initspeed;
 			function setObject(){
 				var distance;
 				var centerobject;
 				var theta_revol;
 				var theta_rota;
-				count++;
+				count += speedscalar;
 				for(i in planet){
-					theta_revol = count/planet[i].t_revol * speedscalar;
-					theta_rota = count/planet[i].t_rota * speedscalar;
+					theta_revol = count/planet[i].t_revol;
+					theta_rota = count/planet[i].t_rota;
 					//set planet's pivot-rotation 
 					planet[i].object.rotation.set(0 , theta_rota, planet[i].tilt, 'ZXY');
 					//set planet's revolving center
 					centerobject = scene.getObjectById(planet[i].centerobject, true); 		
 					//set planet's position
-					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, centerobject.position.y, planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
+					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol + planet[i].theta_init) + centerobject.position.x, centerobject.position.y, planet[i].distance * Math.sin(-theta_revol - planet[i].theta_init) + centerobject.position.z);
 					//set planet's orbit
 					planet[i].circle.position.set(centerobject.position.x, centerobject.position.y, centerobject.position.z);
 
 					//地球惯性坐标系 Earth inertial coordinate frame
-					planet[i].axis_inertial.x.position.set(planet[i].radius + planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, centerobject.position.y, planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
-					planet[i].axis_inertial.y.position.set(planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, planet[i].radius + centerobject.position.y, planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
-					planet[i].axis_inertial.z.position.set(planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, centerobject.position.y, planet[i].radius + planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
+					planet[i].axis_inertial.x.position.set(planet[i].radius + planet[i].distance * Math.cos(theta_revol + planet[i].theta_init) + centerobject.position.x, centerobject.position.y, planet[i].distance * Math.sin(-theta_revol - planet[i].theta_init) + centerobject.position.z);
+					planet[i].axis_inertial.y.position.set(planet[i].distance * Math.cos(theta_revol + planet[i].theta_init) + centerobject.position.x, planet[i].radius + centerobject.position.y, planet[i].distance * Math.sin(-theta_revol - planet[i].theta_init) + centerobject.position.z);
+					planet[i].axis_inertial.z.position.set(planet[i].distance * Math.cos(theta_revol + planet[i].theta_init) + centerobject.position.x, centerobject.position.y, planet[i].radius + planet[i].distance * Math.sin(-theta_revol - planet[i].theta_init) + centerobject.position.z);
 				}				
 				//地球固连坐标系 Earth centered fixed coordinate frame
-				theta_rota = count/planet["earth"].t_rota * speedscalar;
-				theta_revol = count/planet["earth"].t_revol * speedscalar;
+				theta_rota = count/planet["earth"].t_rota;
+				theta_revol = count/planet["earth"].t_revol;
 				planet["earth"].axis_fixed.x.rotation.set(theta_rota, 0, planet["earth"].tilt + Math.PI/2, 'ZXY');
 				planet["earth"].axis_fixed.y.rotation.set(0, theta_rota, planet["earth"].tilt, 'ZXY');
 				planet["earth"].axis_fixed.z.rotation.set(Math.PI/2, planet["earth"].tilt, -theta_rota, 'XYZ');
@@ -196,13 +198,13 @@
 					-planet["earth"].radius * Math.cos(planet["earth"].tilt) * Math.sin(theta_rota) + planet["earth"].object.position.z);
 				planet["earth"].axis_fixed.y.position.set(-planet["earth"].radius * Math.sin(planet["earth"].tilt) + planet["earth"].object.position.x, 
 					planet["earth"].radius * Math.cos(planet["earth"].tilt) + planet["earth"].object.position.y, 
-					planet["earth"].distance * Math.sin(-theta_revol) + centerobject.position.z);
+					planet["earth"].distance * Math.sin(-planet["earth"].theta_init - theta_revol) + centerobject.position.z);
 				planet["earth"].axis_fixed.z.position.set(planet["earth"].radius * Math.cos(planet["earth"].tilt) * Math.sin(theta_rota) + planet["earth"].object.position.x, 
 					planet["earth"].radius * Math.sin(planet["earth"].tilt) * Math.sin(theta_rota) + planet["earth"].object.position.y, 
 					planet["earth"].radius * Math.cos(planet["earth"].tilt) * Math.cos(theta_rota) + planet["earth"].object.position.z);
 			}
 			var camera;
-			var dist_cam_f = 15000;
+			var dist_cam_f = 30000;
 			var dist_cam_n = 100;
 			var tracedObject;
 			var tracedPlanet;
@@ -215,21 +217,24 @@
 			}
 			var trace = false;
 			var camposi_basic = new THREE.Vector3(0, 0, 0);
-			var thetaMove_traced = 0;//accumulated angle change of traced target view by mouse in zx plane
-			var alphaMove_traced = 0;//accumulated angle change of traced target view by mouse in xy plane
-			var thetaMove_global = 0;//accumulated angle change of global view by mouse in zx plane
-			var alphaMove_global = 0;//accumulated angle change of global view by mouse in xy plane
-			var zoom = 70;
+			var thetaMove_traced = 0;//accumulated angle change of traced target perspect by mouse in zx plane
+			var alphaMove_traced = 0;//accumulated angle change of traced target perspect by mouse in xy plane
+			var thetaMove_global = 0;//accumulated angle change of global perspect by mouse in zx plane
+			var alphaMove_global = 0;//accumulated angle change of global perspect by mouse in xy plane
+			var v_initzoom = 70; 
+			var zoom = v_initzoom;
 			function setCamera(){
-				var theta_rota_traced = count/tracedPlanet.t_rota * speedscalar;
+				var theta_rota_traced = count/tracedPlanet.t_rota;
 				if("Centered" == states_View){
+					camera.rotation.set(0, 0, planet["earth"].tilt, 'ZXY');
 					//地球固连坐标系 Earth centered fixed coordinate frame
 					if(trace){
-						/*camposi_basic.z = -tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt + alphaMove_traced) * Math.sin(theta_rota_traced + thetaMove_traced);
-						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt + alphaMove_traced) * Math.cos( theta_rota_traced + thetaMove_traced);
-						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(tracedPlanet.tilt + alphaMove_traced) * Math.cos(theta_rota_traced + thetaMove_traced);
+						/*
+						camposi_basic.z = -tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt + alphaMove_traced) * Math.sin(theta_rota_traced - thetaMove_traced);
+						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt + alphaMove_traced) * Math.cos( theta_rota_traced - thetaMove_traced);
+						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(tracedPlanet.tilt + alphaMove_traced) * Math.cos(theta_rota_traced - thetaMove_traced);
 						*/
-						//水平视角 horizontal centered view
+						//水平视角 horizontal centered perspect
 						camposi_basic.z = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.cos(thetaMove_traced - theta_rota_traced);
 						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.sin(theta_rota_traced - thetaMove_traced);
 						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(alphaMove_traced);
@@ -269,7 +274,7 @@
 				//消除不同浏览器滚轮事件差异。
 				ev = ev || renderer.domElement.event;
 				delta = (ev.wheelDelta) ? ev.wheelDelta / 120 : -(ev.detail || 0) / 3;
-				if(zoom - delta <= 80 && zoom - delta > 5) zoom -= delta;			
+				if(zoom - delta <= v_initzoom * 3 && zoom - delta > 5) zoom -= delta;			
 				//禁止默认鼠标事件
 				if(ev.preventDefault) {
 					// Firefox
@@ -343,7 +348,7 @@
 										+ 'position: (' + target.position.x +', ' + target.position.y + ', ' + target.position.z + ')';
 										if(target == tracedObject && trace){
 											trace = false;
-											zoom = 70;
+											zoom = v_initzoom;
 											tracedObject = planet["sun"].object;
 											camera.up.set(0, 0, -1);
 										}
@@ -394,20 +399,40 @@
 			var states_Simu = false;
 			function simulationState(){
 				states_Simu = !states_Simu;
-				if(states_Simu) document.getElementById('Statesofsimulation').innerHTML = "Stop Simulation";
-				else document.getElementById('Statesofsimulation').innerHTML = "Start Simulation";
+				if(states_Simu) document.getElementById('StatesOfSimulation').innerHTML = "Stop Simulation";
+				else document.getElementById('StatesOfSimulation').innerHTML = "Start Simulation";
 			}
 			var states_View = "Static";
-			function viewState(){
+			function perspectState(){
 				if("Static" == states_View){
 					states_View = "Centered";
-					document.getElementById('StatesofView').innerHTML = "Centered View";
+					document.getElementById('StatesOfPerspect').innerHTML = "Centered View";
 				}
 				else{
 					states_View = "Static";
-					document.getElementById('StatesofView').innerHTML = "Static View";
+					document.getElementById('StatesOfPerspect').innerHTML = "Static View";
 				}
 
+			}
+			function resetPerspect(){
+				zoom = v_initzoom;
+				thetaMove_global = 0;
+				valphaMove_global = 0;
+				trace = false;
+				tracedObject = planet["sun"].object;
+				camera.up.set(0, 0, -1);
+				tracedPlanet = planet[tracedObject.name];
+				tracedObject.geometry.computeBoundingSphere();
+				setCamera();
+			}
+			function addSpeed(){
+				speedscalar *=1.3;
+			}
+			function subSpeed(){
+				speedscalar /=1.3;
+			}
+			function resetSpeed(){
+				speedscalar = v_initspeed;
 			}
 			function loop(){
 				if(states_Simu)	setObject();
@@ -431,8 +456,12 @@
 	</head> 
 	<body onload="threeStart();">
 		<div id= "stats">States</div>
-		<button id = "Statesofsimulation", onClick="simulationState()">Start Simulation</button> 
-		<button id = "StatesofView", onClick="viewState()">Static View</button> 
+		<button id = "StatesOfSimulation", onClick="simulationState()">Start Simulation</button> 
+		<button id = "StatesOfPerspect", onClick="perspectState()">Static View</button> 
+		<button id = "PerspectReseter", onClick="resetPerspect()">Reset Perspect</button> 
+		<button id = "SpeedAdder", onClick="addSpeed()">Speed++</button> 
+		<button id = "SpeedSuber", onClick="subSpeed()">Speed--</button> 
+		<button id = "SpeedReseter", onClick="resetSpeed()">Reset Speed</button> 
 		<div id="canvas-frame"></div>
 	</body>
 </html>
