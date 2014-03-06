@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>SolarSystem</title>
+		<script src="three.js"></script>
+		<style type="text/css">
+			div#canvas-frame{
+				border-style: solid;
+				border-width: 2pt;
+				border-color: #AAAAAA;
+				cursor: move;
+				width: 1000px;
+				height: 650px;
+				background-color: #FFFFFF;
+		}
+		</style>
+		<script>
+			var renderer;
+			var widthOfScene;
+			var heightOfScene;
+			var element_canvas;
+			function initRender() {
+				element_canvas = document.getElementById('canvas-frame');
+				widthOfScene = element_canvas.clientWidth;
+				heightOfScene = element_canvas.clientHeight; 
+				renderer = new THREE.WebGLRenderer({antialias: true});
+				renderer.setSize(widthOfScene, heightOfScene );
+				element_canvas.appendChild(renderer.domElement);
+				renderer.setClearColorHex(0x000000, 1.0);
+			}
+			var scene;
+			function initScene() {
+				scene = new THREE.Scene();
+			}
+			var light;
+			function initLight() { 
+				light_Ambient = new THREE.AmbientLight(0x808080, 0.2);
+				light_Ambient.position.set( 0, 0, dist_cam_f).normalize();
+				//light_Directional = new THREE.DirectionalLight(0xFFFFFF);
+				//light_Directional.position.set(dist_cam_f, 0, 0);
+				light_Point = new THREE.PointLight(0xFFFFFF);
+				light_Point.position.set(0, 0, 0);
+				//scene.add(light_Directional);
+				scene.add(light_Ambient);
+				scene.add(light_Point);
+			}
+			function makecircle(object){
+				var resolution = object.distance;
+				var amplitude = object.distance;
+				var size = 360/resolution;
+				var geometry = new THREE.Geometry();
+				var material = new THREE.LineBasicMaterial( { color: 0x808080, opacity: 1.0} );
+				for(var i = 0; i <= resolution; i++) {
+					var segment = ( i * size ) * Math.PI / 180;
+					geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( Math.cos( segment ) * amplitude, 0, Math.sin( segment ) * amplitude ) ) );         
+				}
+				var line = new THREE.Line( geometry, material, THREE.LineStrip );//LinePieces
+				line.name = object.planetname;
+				line.id = object.planetname;
+				return line;
+		  	}
+			function makeaxis(axis, planet){
+				var geometry = new THREE.CylinderGeometry(1, 1, planet.radius * 2, 20, 1, false);
+				//radiusTop — Radius of the cylinder at the top. Default is 20.
+				//radiusBottom — Radius of the cylinder at the bottom. Default is 20.
+				//height — Height of the cylinder. Default is 100.
+				//radiusSegments — Number of segmented faces around the circumference of the cylinder. Default is 8
+				//heightSegments — Number of rows of faces along the height of the cylinder. Default is 1.
+				//openEnded — A Boolean indicating whether the ends of the cylinder are open or capped. Default is false, meaning capped.
+				var material = new THREE.MeshBasicMaterial( {opacity: 1.0} );
+				var axisMesh = new THREE.Mesh(geometry, material);
+				axisMesh.name = planet.planetname;
+				axisMesh.id = planet.planetname;
+				switch(axis)
+				{
+					case 'x':
+						axisMesh.rotation.set(0, 0, Math.PI/2, 'XYZ');
+						axisMesh.material.color = new THREE.Color(0xFF0000);
+						break;
+					case 'y':
+						axisMesh.rotation.set(0, 0, 0, 'XYZ');
+						axisMesh.material.color = new THREE.Color(0x00FF00);
+						break;
+					case 'z':
+						axisMesh.rotation.set(Math.PI/2, 0, 0, 'XYZ');
+						axisMesh.material.color = new THREE.Color(0x0000FF);
+						break;
+					default :
+						console.log("Error para in function makeaxis().");
+						return -1;
+				}
+				return axisMesh;
+			}
+			function Planet(planetname, textname, rad, cent, dist, t_revolution, t_rotation, axialTilt){
+				this.planetname = planetname;
+				this.textfilename = "images/" + textname;
+				this.radius = rad;
+				this.centerobject = cent;
+				this.distance = dist
+				this.t_revol = t_revolution;
+				this.t_rota = t_rotation;
+				this.tilt = axialTilt;
+				this.object = new THREE.Mesh(new THREE.SphereGeometry( this.radius, this.radius, this.radius ), new THREE.MeshLambertMaterial({map: new THREE.ImageUtils.loadTexture(this.textfilename)}));
+				this.object.name = planetname;
+				this.object.id = planetname;
+				this.circle = makecircle(this);//new THREE.Line(new THREE.CircleGeometry(this.distance, this.distance), new THREE.MeshLambertMaterial({color: 0x808080}), THREE.LinePieces);
+				this.axis_inertial = {
+					x : makeaxis('x', this),
+					y : makeaxis('y', this),
+					z : makeaxis('z', this),
+				};
+				this.axis_fixed = {
+					x : makeaxis('x', this),
+					y : makeaxis('y', this),
+					z : makeaxis('z', this),
+				};
+			}
+			var planet;
+			function initPlanet(){
+				planet = new Array();
+				//   				      	 	objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation， Axial tilt
+				planet["sun"] 		= new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		100000, 		1000000,	 7.25/90*Math.PI/2);
+				planet["mercury"] 	= new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		200, 	87.97*2, 		58.646,		 0/90*Math.PI/2);
+				planet["venus"] 	= new Planet("venus", 		"venusmap.jpg", 	30, 	"sun", 		300, 	224.7, 			-243,		 177.36/90*Math.PI/2);
+				planet["earth"] 	= new Planet("earth", 		"earthmap.jpg", 	50, 	"sun", 		450, 	365, 			0.99727*200, 23.26/90*Math.PI/2);
+				planet["moon"] 		= new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	120, 	29.53, 			29.53,		 6.68/90*Math.PI/2);
+				planet["mars"] 		= new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		650, 	686.93/2, 		1.0260*200,	 25.19/90*Math.PI/2);
+				planet["jupiter"] 	= new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		800, 	11.5856*365/10,	0.41354*500, 3.13/90*Math.PI/2);
+				planet["saturn"] 	= new Planet("saturn", 		"saturnmap.jpg", 	90, 	"sun", 		1100, 	29.448*365/20,	0.44401*500, 26.73/90*Math.PI/2);
+				planet["uranus"] 	= new Planet("uranus", 		"uranusmap.jpg", 	30, 	"sun", 		1400, 	164.79*365/80,	0.67125*500, 97.77/90*Math.PI/2);
+				planet["neptune"] 	= new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		1500, 	247.92*365/100, 0.2488*500,	 28.32/90*Math.PI/2);	
+				for(i in planet){
+					scene.add(planet[i].object);
+					scene.add(planet[i].circle);
+					//scene.add(planet[i].axis_inertial.x);
+					//planet[i].axis_inertial.x.position.x += planet[i].radius;
+					//scene.add(planet[i].axis_inertial.y);
+					//planet[i].axis_inertial.y.position.y += planet[i].radius;
+					//scene.add(planet[i].axis_inertial.z);
+					//planet[i].axis_inertial.z.position.z += planet[i].radius;
+				}
+				var axisplanet = ["sun","earth","moon"];
+				for(i in axisplanet){
+					scene.add(planet[axisplanet[i]].axis_inertial.x);
+					planet[axisplanet[i]].axis_inertial.x.position.x += planet[axisplanet[i]].radius;
+					scene.add(planet[axisplanet[i]].axis_inertial.y);
+					planet[axisplanet[i]].axis_inertial.y.position.y += planet[axisplanet[i]].radius;
+					scene.add(planet[axisplanet[i]].axis_inertial.z);
+					planet[axisplanet[i]].axis_inertial.z.position.z += planet[axisplanet[i]].radius;
+				}
+				scene.add(planet["earth"].axis_fixed.x);
+				planet["earth"].axis_fixed.x.position.x += planet["earth"].radius;
+				scene.add(planet["earth"].axis_fixed.y);
+				planet["earth"].axis_fixed.y.position.y += planet["earth"].radius;
+				scene.add(planet["earth"].axis_fixed.z);
+				planet["earth"].axis_fixed.z.position.z += planet["earth"].radius;
+			}			
+			function initObject(){
+				initPlanet();				
+			}
+			var count=0;
+			var speedscalar = 2;
+			function setObject(){
+				var distance;
+				var centerobject;
+				var theta_revol;
+				var theta_rota;
+				count++;
+				for(i in planet){
+					theta_revol = count/planet[i].t_revol * speedscalar;
+					theta_rota = count/planet[i].t_rota * speedscalar;
+					//set planet's pivot-rotation 
+					planet[i].object.rotation.set(0 , theta_rota, planet[i].tilt, 'ZXY');
+					//set planet's revolving center
+					centerobject = scene.getObjectById(planet[i].centerobject, true); 		
+					//set planet's position
+					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, centerobject.position.y, planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
+					//set planet's orbit
+					planet[i].circle.position.set(centerobject.position.x, centerobject.position.y, centerobject.position.z);
+
+					//地球惯性坐标系 Earth inertial coordinate frame
+					planet[i].axis_inertial.x.position.set(planet[i].radius + planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, centerobject.position.y, planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
+					planet[i].axis_inertial.y.position.set(planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, planet[i].radius + centerobject.position.y, planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
+					planet[i].axis_inertial.z.position.set(planet[i].distance * Math.cos(theta_revol) + centerobject.position.x, centerobject.position.y, planet[i].radius + planet[i].distance * Math.sin(-theta_revol) + centerobject.position.z);
+				}				
+				//地球固连坐标系 Earth centered fixed coordinate frame
+				theta_rota = count/planet["earth"].t_rota * speedscalar;
+				theta_revol = count/planet["earth"].t_revol * speedscalar;
+				planet["earth"].axis_fixed.x.rotation.set(theta_rota, 0, planet["earth"].tilt + Math.PI/2, 'ZXY');
+				planet["earth"].axis_fixed.y.rotation.set(0, theta_rota, planet["earth"].tilt, 'ZXY');
+				planet["earth"].axis_fixed.z.rotation.set(Math.PI/2, planet["earth"].tilt, -theta_rota, 'XYZ');
+
+				planet["earth"].axis_fixed.x.position.set(planet["earth"].radius * Math.cos(planet["earth"].tilt) * Math.cos(theta_rota) + planet["earth"].object.position.x, 
+					planet["earth"].radius * Math.sin(planet["earth"].tilt) * Math.cos(theta_rota) + planet["earth"].object.position.y, 
+					-planet["earth"].radius * Math.cos(planet["earth"].tilt) * Math.sin(theta_rota) + planet["earth"].object.position.z);
+				planet["earth"].axis_fixed.y.position.set(-planet["earth"].radius * Math.sin(planet["earth"].tilt) + planet["earth"].object.position.x, 
+					planet["earth"].radius * Math.cos(planet["earth"].tilt) + planet["earth"].object.position.y, 
+					planet["earth"].distance * Math.sin(-theta_revol) + centerobject.position.z);
+				planet["earth"].axis_fixed.z.position.set(planet["earth"].radius * Math.cos(planet["earth"].tilt) * Math.sin(theta_rota) + planet["earth"].object.position.x, 
+					planet["earth"].radius * Math.sin(planet["earth"].tilt) * Math.sin(theta_rota) + planet["earth"].object.position.y, 
+					planet["earth"].radius * Math.cos(planet["earth"].tilt) * Math.cos(theta_rota) + planet["earth"].object.position.z);
+			}
+			var camera;
+			var dist_cam_f = 15000;
+			var dist_cam_n = 100;
+			var tracedObject;
+			var tracedPlanet;
+			function initCamera(){
+				camera = new THREE.PerspectiveCamera( 25, widthOfScene/heightOfScene, dist_cam_n, dist_cam_f);
+				camera.up.set(0, 0, -1);
+				tracedObject = planet["sun"].object;
+				tracedPlanet = planet["sun"];
+				setCamera();
+			}
+			var trace = false;
+			var camposi_basic = new THREE.Vector3(0, 0, 0);
+			var thetaMove_traced = 0;//accumulated angle change of traced target view by mouse in zx plane
+			var alphaMove_traced = 0;//accumulated angle change of traced target view by mouse in xy plane
+			var thetaMove_global = 0;//accumulated angle change of global view by mouse in zx plane
+			var alphaMove_global = 0;//accumulated angle change of global view by mouse in xy plane
+			var zoom = 70;
+			function setCamera(){
+				var theta_rota_traced = count/tracedPlanet.t_rota * speedscalar;
+				if("Centered" == states_View){
+					//地球固连坐标系 Earth centered fixed coordinate frame
+					if(trace){
+						/*camposi_basic.z = -tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt + alphaMove_traced) * Math.sin(theta_rota_traced + thetaMove_traced);
+						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt + alphaMove_traced) * Math.cos( theta_rota_traced + thetaMove_traced);
+						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(tracedPlanet.tilt + alphaMove_traced) * Math.cos(theta_rota_traced + thetaMove_traced);
+						*/
+						//水平视角 horizontal centered view
+						camposi_basic.z = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.cos(thetaMove_traced - theta_rota_traced);
+						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.sin(theta_rota_traced - thetaMove_traced);
+						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(alphaMove_traced);
+						
+					}
+					else{
+						camposi_basic.z = tracedObject.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_global) * Math.cos(thetaMove_global - theta_rota_traced);
+						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_global) * Math.sin(theta_rota_traced - thetaMove_global);
+						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(Math.PI/2 + alphaMove_global);
+					}
+				}
+				else{
+					//地球惯性坐标系 Earth inertial coordinate frame
+					if(trace){
+						camposi_basic.z = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.cos(thetaMove_traced);
+						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.sin(-thetaMove_traced);
+						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(alphaMove_traced);
+					}
+					else{
+						camposi_basic.z = tracedObject.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_global) * Math.cos(thetaMove_global);
+						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_global) * Math.sin(-thetaMove_global);
+						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(Math.PI/2 + alphaMove_global);
+					}
+				}
+				camera.position.set(tracedObject.position.x + camposi_basic.x * zoom, tracedObject.position.y + camposi_basic.y * zoom, tracedObject.position.z + camposi_basic.z * zoom);
+				camera.lookAt({x: tracedObject.position.x, y: tracedObject.position.y, z: tracedObject.position.z});
+			}
+			//屏幕坐标与canvas-frame坐标转换
+			var cor_Transform = new THREE.Vector2();
+			function corTransform(x, y){
+				cor_Transform.x = (( x - element_canvas.getBoundingClientRect().left)/ element_canvas.clientWidth ) * 2 - 1;
+				cor_Transform.y = -(( y - element_canvas.getBoundingClientRect().top)/ element_canvas.clientHeight ) * 2 + 1;
+			}
+			//编写鼠标滚轮事件。
+			var onMouseWheel = function(ev){
+				var delta = 0;
+				//消除不同浏览器滚轮事件差异。
+				ev = ev || renderer.domElement.event;
+				delta = (ev.wheelDelta) ? ev.wheelDelta / 120 : -(ev.detail || 0) / 3;
+				if(zoom - delta <= 80 && zoom - delta > 5) zoom -= delta;			
+				//禁止默认鼠标事件
+				if(ev.preventDefault) {
+					// Firefox
+					ev.preventDefault();
+					ev.stopPropagation();
+				} else {
+					// IE
+					ev.cancelBubble=true;
+					ev.returnValue = false;
+				}
+				return false;
+			}
+			function initMouseWheel(){
+				if( renderer.domElement.netscape ){
+					renderer.domElement.addEventListener('DOMMouseScroll', onMouseWheel, false);
+				}
+				else{
+					renderer.domElement.onmousewheel = onMouseWheel;
+				}
+			}
+			var down = false;
+			var lastMouseposi = new THREE.Vector2();
+			var onMouseDown = function(ev){
+				downMove = false;
+				if(ev.target == renderer.domElement && 1 == ev.which){
+					down = true;
+					corTransform(ev.clientX, ev.clientY);
+					lastMouseposi.set(cor_Transform.x, cor_Transform.y);
+				}
+			}
+			var raycaster = new THREE.Raycaster();
+			var projector = new THREE.Projector();
+			var onMouseUp = function(ev){
+				if(down && 1 == ev.which){
+					down = false;
+					if(!downMove){
+						downMove = false;
+						var directionVector = new THREE.Vector3();
+						// The following will translate the mouse coordinates into a number
+						// ranging from -1 to 1, where
+						//      x == -1 && y ==  1 means top-left, and
+						//      x ==  1 && y == -1 means bottom right
+						corTransform(ev.clientX, ev.clientY);
+						directionVector.set(cor_Transform.x, cor_Transform.y, 1);
+						// Unproject the vector
+						projector.unprojectVector(directionVector, camera);					 
+						// Substract the vector representing the camera position
+						directionVector.sub(camera.position);
+						//Normalize the vector, to avoid large numbers from the
+						// projection and substraction
+						directionVector.normalize();
+						// Now our direction vector holds the right numbers!
+						raycaster.set(camera.position, directionVector);
+						// Ask the raycaster for intersects with all objects in the scene:
+						// (The second arguments means "recursive")
+						var intersects = raycaster.intersectObjects(scene.children, true);
+						//Get the first object that is one of planets, than decide to trace it or release camera.
+						if (intersects.length) {
+							// intersections are, by default, ordered by distance,
+							// so we only care for the first one. The intersection
+							// object holds the intersection point, the face that's
+							// been "hit" by the ray, and the object to which that
+							// face belongs. We only care for the object itself.
+							for(i = 0; i<intersects.length; i++){
+								for(j in planet){
+									if(intersects[i].object == planet[j].object){
+										target = intersects[i].object;
+										document.getElementById('stats').innerHTML = 'Name: ' + target.name
+										+ '<br>'
+										+ 'ID: ' + target.id + '<br>'
+										+ 'position: (' + target.position.x +', ' + target.position.y + ', ' + target.position.z + ')';
+										if(target == tracedObject && trace){
+											trace = false;
+											zoom = 70;
+											tracedObject = planet["sun"].object;
+											camera.up.set(0, 0, -1);
+										}
+										else{
+											trace = true;
+											zoom = 5;
+											thetaMove_traced = 0;
+											alphaMove_traced = 0;
+											tracedObject = target;
+											camera.up.set(0, 1, 0);
+										}
+										tracedPlanet = planet[tracedObject.name];
+										tracedObject.geometry.computeBoundingSphere();				
+										setCamera();
+										return 0;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			var downMove = false;
+			var onMouseMove = function(ev){
+				if(down){
+					downMove = true;					
+					corTransform(ev.clientX, ev.clientY);
+					var deltaX = cor_Transform.x - lastMouseposi.x;
+					var deltaY = cor_Transform.y - lastMouseposi.y;
+					var directionVector1 = new THREE.Vector2(lastMouseposi.x, lastMouseposi.y);
+					var directionVector2 = new THREE.Vector2(cor_Transform.x, cor_Transform.y);
+					if(trace){
+						thetaMove_traced += (directionVector2.x - directionVector1.x);
+						alphaMove_traced = alphaMove_traced - (directionVector2.y - directionVector1.y) > Math.PI/2 || alphaMove_traced - (directionVector2.y - directionVector1.y) < -Math.PI/2 ? alphaMove_traced : alphaMove_traced - (directionVector2.y - directionVector1.y);
+					}
+					else{
+						thetaMove_global += (directionVector2.x - directionVector1.x);
+						alphaMove_global = Math.PI/2 + alphaMove_global - (directionVector2.y - directionVector1.y) > Math.PI/2 || Math.PI/2 + alphaMove_global - (directionVector2.y - directionVector1.y) < -Math.PI/2 ? alphaMove_global : alphaMove_global - (directionVector2.y - directionVector1.y);
+					}
+					lastMouseposi.set(cor_Transform.x, cor_Transform.y);
+				}				
+			}
+			function initDrag(){
+				renderer.domElement.addEventListener('mousedown', onMouseDown, false);
+				renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+				renderer.domElement.addEventListener('mouseup', onMouseUp, false);
+			}
+			var states_Simu = false;
+			function simulationState(){
+				states_Simu = !states_Simu;
+				if(states_Simu) document.getElementById('Statesofsimulation').innerHTML = "Stop Simulation";
+				else document.getElementById('Statesofsimulation').innerHTML = "Start Simulation";
+			}
+			var states_View = "Static";
+			function viewState(){
+				if("Static" == states_View){
+					states_View = "Centered";
+					document.getElementById('StatesofView').innerHTML = "Centered View";
+				}
+				else{
+					states_View = "Static";
+					document.getElementById('StatesofView').innerHTML = "Static View";
+				}
+
+			}
+			function loop(){
+				if(states_Simu)	setObject();
+				setCamera();
+				renderer.clear();
+				renderer.render(scene, camera);
+				window.requestAnimationFrame(loop);
+			}
+			function threeStart(){
+				initRender();
+				initScene();
+				initLight();
+				initObject();
+				initCamera();
+				initMouseWheel();
+				initDrag();
+				setObject();
+				loop();
+			}
+		</script>
+	</head> 
+	<body onload="threeStart();">
+		<div id= "stats">States</div>
+		<button id = "Statesofsimulation", onClick="simulationState()">Start Simulation</button> 
+		<button id = "StatesofView", onClick="viewState()">Static View</button> 
+		<div id="canvas-frame"></div>
+	</body>
+</html>

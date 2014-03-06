@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>SolarSystem</title>
+		<script src="three.js"></script>
+		<style type="text/css">
+			div#canvas-frame{
+				border-style: solid;
+				border-width: 2pt;
+				border-color: #AAAAAA;
+				cursor: move;
+				width: 1000px;
+				height: 650px;
+				background-color: #FFFFFF;
+		}
+		</style>
+		<script>
+			var renderer;
+			function initThree() {
+				width = document.getElementById('canvas-frame').clientWidth;
+				height = document.getElementById('canvas-frame').clientHeight; 
+				renderer = new THREE.WebGLRenderer({antialias: true});
+				renderer.setSize(width, height );
+				document.getElementById('canvas-frame').appendChild(renderer.domElement);
+				renderer.setClearColorHex(0x000000, 1.0);
+			}
+			var dist_cam_f = 15000;
+			var dist_cam_n = 100;
+			var camposi_basic = new THREE.Vector3(0, 0, 0);
+			var zoom = 70;
+		  	var camera;
+		  	var trace = false;
+			var tracedTarget;
+			var tracedPlanet;
+			function initCamera(){
+				tracedPlanet = getPlanetByObject(tracedTarget);
+				camera.up.set(0, 1, 0);
+				if(trace){
+					zoom = 5;
+					thetaMove_traced = 0;
+					alphaMove_traced = 0;
+				}
+				else{
+					zoom = 70;
+				}
+				setCamera();
+			}
+			var thetaMove_traced = 0;
+			var alphaMove_traced = 0;
+			var thetaMove_whole = 0;
+			var alphaMove_whole = 0;
+		  	function setCamera(){
+		  		tracedTarget.geometry.computeBoundingSphere();
+				var theta_revol = count/tracedPlanet.t_revol * speedscalar;					
+		  		if(trace){
+		  			camposi_basic.x = tracedTarget.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.cos(theta_revol - thetaMove_traced);
+					camposi_basic.y = tracedTarget.geometry.boundingSphere.radius * Math.sin(alphaMove_traced);
+					camposi_basic.z = tracedTarget.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.sin(thetaMove_traced - theta_revol);
+				}
+				else{
+					camposi_basic.x = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.cos(theta_revol - thetaMove_whole);
+					camposi_basic.y = tracedTarget.geometry.boundingSphere.radius * Math.sin(Math.PI/2 + alphaMove_whole);
+					camposi_basic.z = tracedTarget.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_whole) * Math.sin(thetaMove_whole - theta_revol);
+					console.log();
+				}
+				camera.position.set(tracedTarget.position.x + camposi_basic.x * zoom, tracedTarget.position.y + camposi_basic.y * zoom, tracedTarget.position.z + camposi_basic.z * zoom);
+				camera.lookAt({x: tracedTarget.position.x, y: tracedTarget.position.y, z: tracedTarget.position.z});
+			}			
+		  	var scene;
+		  	function initScene() {
+				scene = new THREE.Scene();
+			}
+			var light;
+			function initLight() { 
+				light_Ambient = new THREE.AmbientLight(0x808080, 0.2);
+				light_Ambient.position.set( 0, 0, dist_cam_f).normalize();
+				//light_Directional = new THREE.DirectionalLight(0xFFFFFF);
+				//light_Directional.position.set(dist_cam_f, 0, 0);
+				light_Point = new THREE.PointLight(0xFFFFFF);
+				light_Point.position.set(0, 0, 0);
+				//scene.add(light_Directional);
+				scene.add(light_Ambient);
+				scene.add(light_Point);
+			}
+			function makecircle(object){
+				var resolution = object.distance;
+				var amplitude = object.distance;
+				var size = 360/resolution;
+
+				var geometry = new THREE.Geometry();
+				var material = new THREE.LineBasicMaterial( { color: 0x404040, opacity: 1.0} );
+				for(var i = 0; i <= resolution; i++) {
+					var segment = ( i * size ) * Math.PI / 180;
+					geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( Math.cos( segment ) * amplitude, 0, Math.sin( segment ) * amplitude ) ) );         
+				}
+				var line = new THREE.Line( geometry, material, THREE.LineStrip );//LinePieces
+				return line;
+		  	}
+			var numofobj = 10;
+			function Planet(objname, textname, rad, cent, dist, t_revolution, t_rotation){
+				this.objectname = objname;
+				this.textfilename = "images/" + textname;
+				this.radius = rad;
+				this.center = cent;
+				this.distance = dist
+				this.t_revol = t_revolution;
+				this.t_rota = t_rotation;
+				this.object = new THREE.Mesh(new THREE.SphereGeometry( this.radius, this.radius, this.radius ), new THREE.MeshLambertMaterial({map: new THREE.ImageUtils.loadTexture(this.textfilename)}));
+				this.object.name = this.objectname;
+				this.object.id = this.objectname;
+
+				this.circle = makecircle(this);//new THREE.Line(new THREE.CircleGeometry(this.distance, this.distance), new THREE.MeshLambertMaterial({color: 0x808080}), THREE.LinePieces);
+			}
+			var planet;			
+			function initObject(){
+				planet = new Array( 
+				//         objname, 	textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation
+				new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		10000, 			10000),
+				new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		200, 	87.97*2, 		58.646),
+				new Planet("venus", 	"venusmap.jpg", 	30, 	"sun", 		300, 	224.7, 			-243),
+				new Planet("earth", 	"earthmap.jpg", 	50, 	"sun", 		450, 	365, 			0.99727*200),
+				new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	120, 	29.53, 			29.53),
+				new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		650, 	686.93/2, 	1.0260*200),
+				new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		800, 	11.5856*365/10,	0.41354*500),
+				new Planet("saturn", 	"saturnmap.jpg", 	90, 	"sun", 		1100, 	29.448*365/20,	0.44401*500),
+				new Planet("uranus", 	"uranusmap.jpg", 	30, 	"sun", 		1400, 	164.79*365/80,	0.67125*500),
+				new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		1500, 	247.92*365/100, 0.2488*500)
+				);	
+				for(i = 0; i <numofobj; i++){
+					scene.add(planet[i].object);
+					scene.add(planet[i].circle);
+				}
+			}
+			function getPlanetByObject(obj){
+				for(i = 0; i<numofobj; i++)
+					if(planet[i].object == obj) 
+						return planet[i];
+				return null;
+			}
+			var count=0;
+			var speedscalar = 2;
+			function loop(){
+				var distance;
+				var center;
+				var theta_revol;
+				var theta_rota;
+				count++;
+				for(i=0; i<numofobj; i++){
+				theta_revol = count/planet[i].t_revol * speedscalar;
+				theta_rota = count/planet[i].t_rota * speedscalar;
+					planet[i].object.rotation.set(0, theta_rota, 0);
+					center = scene.getObjectById(planet[i].center, true); 		
+					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol) + center.position.x, center.position.y, planet[i].distance * Math.sin(-theta_revol) + center.position.z);
+					//planet[i].circle.rotation.x = Math.PI/2;
+					planet[i].circle.position.set(center.position.x, center.position.y, center.position.z);
+				}				
+				setCamera();
+				renderer.clear();
+			    renderer.render(scene, camera);
+				window.requestAnimationFrame(loop);
+			}
+			//消除不同浏览器滚轮事件差异。
+			var mouseScroll = function(fn){
+				var roll = function(e){
+			    	var delta = 0;
+			    	e = e || renderer.domElement.event;
+			    	delta = (e.wheelDelta) ? e.wheelDelta / 120 : -(e.detail || 0) / 3;
+			    	fn(delta);//回调函数中的回调函数
+					if(e.preventDefault) {
+						// Firefox
+						e.preventDefault();
+						e.stopPropagation();
+					} else {
+						// IE
+						e.cancelBubble=true;
+						e.returnValue = false;
+					}
+					return false;
+			  	}
+			  	if( renderer.domElement.netscape ){
+			    	renderer.domElement.addEventListener('DOMMouseScroll', roll, false);
+			  	}
+			  	else{
+					renderer.domElement.onmousewheel = roll;
+				}
+			}
+			//编写鼠标滚轮事件。
+			function initMouseWheel(){
+				mouseScroll(function(delta){
+					if(zoom - delta <= 80 && zoom - delta > 5) zoom -= delta;
+				});
+			}
+			var cor_Transform = new THREE.Vector2();
+			function corTransform(x, y){
+				cor_Transform.x = (( x - document.getElementById('canvas-frame').getBoundingClientRect().left)/ document.getElementById('canvas-frame').clientWidth ) * 2 - 1;
+				cor_Transform.y = -(( y - document.getElementById('canvas-frame').getBoundingClientRect().top)/ document.getElementById('canvas-frame').clientHeight ) * 2 + 1;
+					
+			}
+			var down = false;
+			var lastMouseposi = new THREE.Vector2();
+			var onMouseDown = function(ev){
+				downMove = false;
+				if(ev.target == renderer.domElement && 1 == ev.which){
+					down = true;
+					corTransform(ev.clientX, ev.clientY);
+					lastMouseposi.set(cor_Transform.x, cor_Transform.y);
+				}
+			}
+			var raycaster = new THREE.Raycaster();
+			var projector = new THREE.Projector();
+			var onMouseUp = function(ev){
+				if(down && 1 == ev.which){
+					down = false;
+					if(!downMove){
+						downMove = false;
+						var directionVector = new THREE.Vector3();
+						// The following will translate the mouse coordinates into a number
+						// ranging from -1 to 1, where
+						//      x == -1 && y ==  1 means top-left, and
+						//      x ==  1 && y == -1 means bottom right
+						corTransform(ev.clientX, ev.clientY);
+						directionVector.set(cor_Transform.x, cor_Transform.y, 1);
+						// Unproject the vector
+						projector.unprojectVector(directionVector, camera);					 
+						// Substract the vector representing the camera position
+						directionVector.sub(camera.position);
+						//Normalize the vector, to avoid large numbers from the
+						// projection and substraction
+						directionVector.normalize();
+						// Now our direction vector holds the right numbers!
+						raycaster.set(camera.position, directionVector);
+						// Ask the raycaster for intersects with all objects in the scene:
+						// (The second arguments means "recursive")
+						var intersects = raycaster.intersectObjects(scene.children, true);
+						//Get the first object that is one of planets, than decide to trace it or release camera.
+						if (intersects.length) {
+							// intersections are, by default, ordered by distance,
+							// so we only care for the first one. The intersection
+							// object holds the intersection point, the face that's
+							// been "hit" by the ray, and the object to which that
+							// face belongs. We only care for the object itself.
+							var planetClicked = new Boolean(0);
+							for(i = 0; i<intersects.length; i++){							
+								for(j = 0; j<numofobj; j++){
+									if(intersects[i].object == planet[j].object){
+										target = intersects[i].object;
+										document.getElementById('stats').innerHTML = 'Name: ' + target.name
+										+ '<br>'
+										+ 'ID: ' + target.id + '<br>'
+										+ 'position: (' + target.position.x +', ' + target.position.y + ', ' + target.position.z + ')';
+										if(target == tracedTarget && trace){
+											trace = false;
+											tracedTarget = planet[0].object;
+										}
+										else{
+											trace = true;
+											tracedTarget = target;
+										}
+										initCamera();
+										return 0;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			var downMove = false;
+			var onMouseMove = function(ev){
+				if(down){
+					downMove = true;					
+					corTransform(ev.clientX, ev.clientY);
+					var deltaX = cor_Transform.x - lastMouseposi.x;
+					var deltaY = cor_Transform.y - lastMouseposi.y;
+					var directionVector1 = new THREE.Vector2(lastMouseposi.x, lastMouseposi.y);
+					var directionVector2 = new THREE.Vector2(cor_Transform.x, cor_Transform.y);
+					if(trace){
+						thetaMove_traced += (directionVector2.x - directionVector1.x);
+						alphaMove_traced = alphaMove_traced - (directionVector2.y - directionVector1.y) > Math.PI/2 || alphaMove_traced - (directionVector2.y - directionVector1.y) < -Math.PI/2 ? alphaMove_traced : alphaMove_traced - (directionVector2.y - directionVector1.y);
+					}
+					else{
+						thetaMove_whole += (directionVector2.x - directionVector1.x);
+						alphaMove_whole = Math.PI/2 + alphaMove_whole - (directionVector2.y - directionVector1.y) > Math.PI/2 || Math.PI/2 + alphaMove_whole - (directionVector2.y - directionVector1.y) < -Math.PI/2 ? alphaMove_whole : alphaMove_whole - (directionVector2.y - directionVector1.y);
+					}
+					lastMouseposi.set(cor_Transform.x, cor_Transform.y);
+				}				
+			}
+			function initDrag(){
+				renderer.domElement.addEventListener('mousedown', onMouseDown, false);
+				renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+				renderer.domElement.addEventListener('mouseup', onMouseUp, false);
+			}
+		  	function threeStart(){
+		    	initThree();
+		    	camera = new THREE.PerspectiveCamera( 25, width/height, dist_cam_n, dist_cam_f);
+		    	initScene();   
+		    	initLight();
+		    	initObject();
+		    	tracedTarget = planet[0].object;
+		    	initCamera();
+		    	initMouseWheel();
+				initDrag();
+				loop();
+			}
+		</script>
+	</head> 
+	<body onload="threeStart();">
+		<div id= "stats">States</div>
+		<div id="canvas-frame"></div>
+	</body>
+</html>
