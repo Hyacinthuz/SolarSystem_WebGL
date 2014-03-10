@@ -127,9 +127,9 @@
 			//name of ecliptic coordinate frame planet
 			var eAxis_pName = ["sun"];
 			//name of inertial coordinate frame planet
-			var iAxis_pName = ["earth"];
+			var iAxis_pName = ["earth", "moon"];
 			//name of centered fixed coordinate frame planet
-			var fAxis_pName = ["earth","moon"];
+			var fAxis_pName = ["earth"];
 			function initPlanet(){
 				planet = new Array();
 				//   				      	 	objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation， Axial tilt    		theta_init
@@ -218,7 +218,7 @@
 					object_center = scene.getObjectById(planet[iAxis_pName[i]].centerobject, true); 		
 					planet[iAxis_pName[i]].axis_inertial.x.rotation.set(0, 0, planet[iAxis_pName[i]].tilt + Math.PI/2, 'ZXY');
 					planet[iAxis_pName[i]].axis_inertial.y.rotation.set(0, 0, planet[iAxis_pName[i]].tilt, 'ZXY');
-					planet[iAxis_pName[i]].axis_inertial.z.rotation.set(Math.PI/2, planet[fAxis_pName[i]].tilt, 0, 'XYZ');
+					planet[iAxis_pName[i]].axis_inertial.z.rotation.set(Math.PI/2, planet[iAxis_pName[i]].tilt, 0, 'XYZ');
 					planet[iAxis_pName[i]].axis_inertial.x.position.set(planet[iAxis_pName[i]].radius * Math.cos(planet[iAxis_pName[i]].tilt) + planet[iAxis_pName[i]].object.position.x, 
 						planet[iAxis_pName[i]].radius * Math.sin(planet[iAxis_pName[i]].tilt) + planet[iAxis_pName[i]].object.position.y, 
 						planet[iAxis_pName[i]].object.position.z);
@@ -255,7 +255,7 @@
 				}
 			}
 			var count = 1;
-			var v_initspeed = 1
+			var v_initspeed = 1;
 			var speedscalar = v_initspeed;
 			function setObject(){
 				count += speedscalar;
@@ -286,24 +286,24 @@
 			var alphaMove_traced = 0;//accumulated angle change of traced target perspect by mouse in xy plane
 			var thetaMove_global = 0;//accumulated angle change of global perspect by mouse in zx plane
 			var alphaMove_global = 0;//accumulated angle change of global perspect by mouse in xy plane
-			var v_initzoom = 70; 
-			var zoom = v_initzoom;
+			var v_maxzoom = 70;
+			var v_minzoom = 5;
+			var zoom = v_maxzoom;
 			function setCamera(){
 				var theta_rota_traced = count/tracedPlanet.t_rota;
 				if("Centered" == states_View){
-					camera.rotation.set(0, 0, planet[tracedPlanet.tilt].tilt, 'ZXY');
+					//camera.rotation.set(planet[tracedPlanet.planetname].tilt, 0, 0, 'XYZ');
 					//地球固连坐标系 Earth centered fixed coordinate frame
 					if(trace){
+						camposi_basic.z = -tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt * Math.cos(theta_rota_traced) + alphaMove_traced) * Math.sin(theta_rota_traced - thetaMove_traced);
+						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt * Math.cos(theta_rota_traced) + alphaMove_traced) * Math.cos(theta_rota_traced - thetaMove_traced);
+						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(tracedPlanet.tilt * Math.cos(theta_rota_traced) + alphaMove_traced);
 						/*
-						camposi_basic.z = -tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt + alphaMove_traced) * Math.sin(theta_rota_traced - thetaMove_traced);
-						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(tracedPlanet.tilt + alphaMove_traced) * Math.cos( theta_rota_traced - thetaMove_traced);
-						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(tracedPlanet.tilt + alphaMove_traced) * Math.cos(theta_rota_traced - thetaMove_traced);
-						*/
 						//水平视角 horizontal centered perspect
 						camposi_basic.z = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.cos(thetaMove_traced - theta_rota_traced);
 						camposi_basic.x = tracedObject.geometry.boundingSphere.radius * Math.cos(alphaMove_traced) * Math.sin(theta_rota_traced - thetaMove_traced);
 						camposi_basic.y = tracedObject.geometry.boundingSphere.radius * Math.sin(alphaMove_traced);
-						
+						*/
 					}
 					else{
 						camposi_basic.z = tracedObject.geometry.boundingSphere.radius * Math.cos(Math.PI/2 + alphaMove_global) * Math.cos(thetaMove_global - theta_rota_traced);
@@ -340,7 +340,7 @@
 				if(-1 != navigator.userAgent.indexOf("Firefox")) delta = -(ev.detail || 0) / 3;
 				else if(-1 != navigator.userAgent.indexOf("Safari")) delta = ev.wheelDelta / 360;
 				else dalta = ev.wheelDelta / 120;
-				if(zoom - delta <= v_initzoom * 3 && zoom - delta > 5) zoom -= delta;			
+				if(zoom - delta <= v_maxzoom * 3 && zoom - delta > v_minzoom) zoom -= delta;			
 				//禁止默认鼠标事件
 				if(-1 != navigator.userAgent.indexOf("Firefox")) {
 					// Firefox
@@ -416,13 +416,13 @@
 										+ 'position: (' + target.position.x +', ' + target.position.y + ', ' + target.position.z + ')';
 										if(target == tracedObject && trace){
 											trace = false;
-											zoom = v_initzoom;
+											zoom = v_maxzoom;
 											tracedObject = planet["sun"].object;
 											camera.up.set(0, 0, -1);
 										}
 										else{
 											trace = true;
-											zoom = 5;
+											zoom = v_minzoom;
 											thetaMove_traced = 0;
 											alphaMove_traced = 0;
 											tracedObject = target;
@@ -483,7 +483,7 @@
 
 			}
 			function resetPerspect(){
-				zoom = v_initzoom;
+				zoom = v_maxzoom;
 				thetaMove_global = 0;
 				alphaMove_global = 0;
 				trace = false;
