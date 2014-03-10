@@ -127,7 +127,7 @@
 			//name of ecliptic coordinate frame planet
 			var eAxis_pName = ["sun"];
 			//name of inertial coordinate frame planet
-			var iAxis_pName = ["moon"];
+			var iAxis_pName = ["earth", "moon"];
 			//name of centered fixed coordinate frame planet
 			var fAxis_pName = ["earth"];
 			function initPlanet(){
@@ -218,7 +218,7 @@
 					object_center = scene.getObjectById(planet[iAxis_pName[i]].centerobject, true); 		
 					planet[iAxis_pName[i]].axis_inertial.x.rotation.set(0, 0, planet[iAxis_pName[i]].tilt + Math.PI/2, 'ZXY');
 					planet[iAxis_pName[i]].axis_inertial.y.rotation.set(0, 0, planet[iAxis_pName[i]].tilt, 'ZXY');
-					planet[iAxis_pName[i]].axis_inertial.z.rotation.set(Math.PI/2, planet[fAxis_pName[i]].tilt, 0, 'XYZ');
+					planet[iAxis_pName[i]].axis_inertial.z.rotation.set(Math.PI/2, planet[iAxis_pName[i]].tilt, 0, 'XYZ');
 					planet[iAxis_pName[i]].axis_inertial.x.position.set(planet[iAxis_pName[i]].radius * Math.cos(planet[iAxis_pName[i]].tilt) + planet[iAxis_pName[i]].object.position.x, 
 						planet[iAxis_pName[i]].radius * Math.sin(planet[iAxis_pName[i]].tilt) + planet[iAxis_pName[i]].object.position.y, 
 						planet[iAxis_pName[i]].object.position.z);
