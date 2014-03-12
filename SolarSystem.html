@@ -45,9 +45,9 @@
 				scene.add(light_Ambient);
 				scene.add(light_Point);
 			}
-			function makecircle(object){
-				var resolution = object.distance;
-				var amplitude = object.distance;
+			function makecircle(obj){
+				var resolution = obj.distance;
+				var amplitude = obj.distance;
 				var size = 360/resolution;
 				var geometry = new THREE.Geometry();
 				var material = new THREE.LineBasicMaterial( { color: 0x808080, opacity: 1.0} );
@@ -56,12 +56,12 @@
 					geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( Math.cos( segment ) * amplitude, 0, Math.sin( segment ) * amplitude ) ) );         
 				}
 				var line = new THREE.Line( geometry, material, THREE.LineStrip );//LinePieces
-				line.name = object.planetname;
-				line.id = object.planetname;
+				line.name = obj.planetname;
+				line.id = obj.planetname;
 				return line;
 		  	}
-			function makeaxis(axis, planet){
-				var geometry = new THREE.CylinderGeometry(1, 1, planet.radius * 2, 20, 1, false);
+			function makeaxis(axis, pla){
+				var geometry = new THREE.CylinderGeometry(1, 1, pla.radius * 2, 20, 1, false);
 				//radiusTop — Radius of the cylinder at the top. Default is 20.
 				//radiusBottom — Radius of the cylinder at the bottom. Default is 20.
 				//height — Height of the cylinder. Default is 100.
@@ -70,20 +70,23 @@
 				//openEnded — A Boolean indicating whether the ends of the cylinder are open or capped. Default is false, meaning capped.
 				var material = new THREE.MeshBasicMaterial( {opacity: 1.0} );
 				var axisMesh = new THREE.Mesh(geometry, material);
-				axisMesh.name = planet.planetname;
-				axisMesh.id = planet.planetname;
+				axisMesh.name = pla.planetname;
+				axisMesh.id = pla.planetname;
 				switch(axis)
 				{
 					case 'x':
 						axisMesh.rotation.set(0, 0, Math.PI/2, 'XYZ');
+						axisMesh.position.x = pla.radius;
 						axisMesh.material.color = new THREE.Color(0xFF0000);
 						break;
 					case 'y':
 						axisMesh.rotation.set(0, 0, 0, 'XYZ');
+						axisMesh.position.y = pla.radius;
 						axisMesh.material.color = new THREE.Color(0x00FF00);
 						break;
 					case 'z':
 						axisMesh.rotation.set(Math.PI/2, 0, 0, 'XYZ');
+						axisMesh.position.z = pla.radius;
 						axisMesh.material.color = new THREE.Color(0x0000FF);
 						break;
 					default :
@@ -92,7 +95,26 @@
 				}
 				return axisMesh;
 			}
-			function Planet(planetname, textname, rad, cent, dist, t_revolution, t_rotation, axialTilt, inittheta){
+			function makeCorAxes(pla, kind){
+					var x = makeaxis('x', pla);
+					var y = makeaxis('y', pla);
+					var z = makeaxis('z', pla);
+					var coraxesMesh = new THREE.Object3D();
+					coraxesMesh.add(x);
+					coraxesMesh.add(y);
+					coraxesMesh.add(z);
+					switch(kind){
+						case 'i':
+							coraxesMesh.rotation.set(0, 0, pla.tilt, 'ZXY');
+							break;
+						case 'f':
+							coraxesMesh.rotation.set(0, 0, pla.tilt, 'ZXY');
+							break;
+						default:
+					}
+					return coraxesMesh;
+			}
+			function Planet(planetname, textname, rad, cent, dist, t_revolution, t_rotation, axialTilt, initrevo, initrota){
 				this.planetname = planetname;
 				this.textfilename = "images/" + textname;
 				this.radius = rad;
@@ -101,48 +123,36 @@
 				this.t_revol = t_revolution;
 				this.t_rota = t_rotation;
 				this.tilt = axialTilt;
-				this.theta_init = inittheta;
+				this.revo_init = initrevo;
+				this.rota_init = initrota;
 				this.object = new THREE.Mesh(new THREE.SphereGeometry( this.radius, this.radius, this.radius ), new THREE.MeshLambertMaterial({map: new THREE.ImageUtils.loadTexture(this.textfilename)}));
 				this.object.name = planetname;
 				this.object.id = planetname;
 				this.circle = makecircle(this);
-
-				this.axis_ecliptic = {
-					x : makeaxis('x', this),
-					y : makeaxis('y', this),
-					z : makeaxis('z', this),
-				};
-				this.axis_inertial = {
-					x : makeaxis('x', this),
-					y : makeaxis('y', this),
-					z : makeaxis('z', this),
-				};
-				this.axis_fixed = {
-					x : makeaxis('x', this),
-					y : makeaxis('y', this),
-					z : makeaxis('z', this),
-				};
+				this.axis_ecliptic = makeCorAxes(this, 'e');
+				this.axis_inertial = makeCorAxes(this, 'i');
+				this.axis_fixed = makeCorAxes(this, 'f');
 			}
 			var planet;
 			//name of ecliptic coordinate frame planet
-			var eAxis_pName = ["sun"];
+			var eAxis_pName = ["sun", "moon"];
 			//name of inertial coordinate frame planet
-			var iAxis_pName = ["earth", "moon"];
+			var iAxis_pName = ["earth"];
 			//name of centered fixed coordinate frame planet
 			var fAxis_pName = ["earth"];
 			function initPlanet(){
 				planet = new Array();
-				//   				      	 	objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation， Axial tilt    		theta_init
-				planet["sun"] 		= new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		100000, 		1000000,	 7.25/90*Math.PI/2,		0);
-				planet["mercury"] 	= new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		400, 	87.97, 			58.646,		 0/90*Math.PI/2,		40/90*Math.PI/2);
-				planet["venus"] 	= new Planet("venus", 		"venusmap.jpg", 	30, 	"sun", 		600, 	224.7, 			-243,		 177.36/90*Math.PI/2,20/90*Math.PI/2);
-				planet["earth"] 	= new Planet("earth", 		"earthmap.jpg", 	50, 	"sun", 		900, 	365, 			0.99727, 23.26/90*Math.PI/2,	-20/90*Math.PI/2);
-				planet["moon"] 		= new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	250, 	29.53, 			29.53,		 6.68/90*Math.PI/2,		190/90*Math.PI/2);
-				planet["mars"] 		= new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		1300, 	686.93/2, 		1.0260,	 25.19/90*Math.PI/2,	5/90*Math.PI/2);
-				planet["jupiter"] 	= new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		1600, 	11.5856*365,	0.41354, 3.13/90*Math.PI/2,		-65/90*Math.PI/2);
-				planet["saturn"] 	= new Planet("saturn", 		"saturnmap.jpg", 	90, 	"sun", 		2200, 	29.448*365,		0.44401, 26.73/90*Math.PI/2,	45/90*Math.PI/2);
-				planet["uranus"] 	= new Planet("uranus", 		"uranusmap.jpg", 	30, 	"sun", 		2700, 	164.79*365,		0.67125, 97.77/90*Math.PI/2,	190/90*Math.PI/2);
-				planet["neptune"] 	= new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		3000, 	247.92*365, 	0.2488,	 28.32/90*Math.PI/2,	150/90*Math.PI/2);	
+				//   				      	 	objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation， Axial tilt    		revo_init			 rota_init
+				planet["sun"] 		= new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		100000, 		1000000,	 7.25/90*Math.PI/2,		0,					0);
+				planet["mercury"] 	= new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		400, 	87.97, 			58.646,		 0/90*Math.PI/2,		40/90*Math.PI/2,	0);
+				planet["venus"] 	= new Planet("venus", 		"venusmap.jpg", 	30, 	"sun", 		600, 	224.7, 			-243,		 177.36/90*Math.PI/2,20/90*Math.PI/2,	 0);
+				planet["earth"] 	= new Planet("earth", 		"earthmap.jpg", 	50, 	"sun", 		900, 	365, 			0.99727, 23.26/90*Math.PI/2,	-20/90*Math.PI/2,		0);
+				planet["moon"] 		= new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	250, 	29.53, 			29.53,		 6.68/90*Math.PI/2,		190/90*Math.PI/2,	0);
+				planet["mars"] 		= new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		1300, 	686.93/2, 		1.0260,	 25.19/90*Math.PI/2,	5/90*Math.PI/2,			0);
+				planet["jupiter"] 	= new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		1600, 	11.5856*365,	0.41354, 3.13/90*Math.PI/2,		-65/90*Math.PI/2,		0);
+				planet["saturn"] 	= new Planet("saturn", 		"saturnmap.jpg", 	90, 	"sun", 		2200, 	29.448*365,		0.44401, 26.73/90*Math.PI/2,	45/90*Math.PI/2,		0);
+				planet["uranus"] 	= new Planet("uranus", 		"uranusmap.jpg", 	30, 	"sun", 		2700, 	164.79*365,		0.67125, 97.77/90*Math.PI/2,	190/90*Math.PI/2,		0);
+				planet["neptune"] 	= new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		3000, 	247.92*365, 	0.2488,	 28.32/90*Math.PI/2,	150/90*Math.PI/2,		0);	
 			}
 			function addPlanet(){
 				for(var i in planet){
@@ -152,23 +162,11 @@
 			}
 			function addAxes(){
 				//添加黄道坐标系 Add Ecliptic coordinate frame
-				for(var i in eAxis_pName){
-					scene.add(planet[eAxis_pName[i]].axis_ecliptic.x);
-					scene.add(planet[eAxis_pName[i]].axis_ecliptic.y);
-					scene.add(planet[eAxis_pName[i]].axis_ecliptic.z);
-				}
+				for(var i in eAxis_pName)	scene.add(planet[eAxis_pName[i]].axis_ecliptic);
 				//添加惯性坐标系 add inertial coordinate frame
-				for(var i in iAxis_pName){
-					scene.add(planet[iAxis_pName[i]].axis_inertial.x);
-					scene.add(planet[iAxis_pName[i]].axis_inertial.y);
-					scene.add(planet[iAxis_pName[i]].axis_inertial.z);
-				}
+				for(var i in iAxis_pName)	scene.add(planet[iAxis_pName[i]].axis_inertial);
 				//添加固连坐标系 Add centered fixed coordinate frame
-				for(var i in fAxis_pName){
-					scene.add(planet[fAxis_pName[i]].axis_fixed.x);
-					scene.add(planet[fAxis_pName[i]].axis_fixed.y);
-					scene.add(planet[fAxis_pName[i]].axis_fixed.z);
-				}
+				for(var i in fAxis_pName)	scene.add(planet[fAxis_pName[i]].axis_fixed);
 			}
 			function initObject(){
 				initPlanet();
@@ -184,74 +182,43 @@
 					theta_revol = count/planet[i].t_revol;
 					theta_rota = count/planet[i].t_rota;
 					//set planet's pivot-rotation 
-					planet[i].object.rotation.set(0 , theta_rota, planet[i].tilt, 'ZXY');
+					planet[i].object.rotation.set(0 , theta_rota + planet[i].rota_init, planet[i].tilt, 'ZXY');
 					//set planet's revolving center
 					object_center = scene.getObjectById(planet[i].centerobject, true); 		
 					//set planet's position
-					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol + planet[i].theta_init) + object_center.position.x, object_center.position.y, planet[i].distance * Math.sin(-theta_revol - planet[i].theta_init) + object_center.position.z);
+					planet[i].object.position.set(planet[i].distance * Math.cos(theta_revol + planet[i].revo_init) + object_center.position.x, object_center.position.y, planet[i].distance * Math.sin(-theta_revol - planet[i].revo_init) + object_center.position.z);
 					//set planet's orbit
 					planet[i].circle.position.set(object_center.position.x, object_center.position.y, object_center.position.z);
 				}
 			}
 			//更新黄道坐标系姿态及位置 Refresh Ecliptic coordinate frame‘s bearing & position
 			function refresheAxes(){
-				var object_center;
-				var theta_revol;
-				var theta_rota;
 				for(var i in eAxis_pName){
-					theta_rota = count/planet[eAxis_pName[i]].t_rota;
-					theta_revol = count/planet[eAxis_pName[i]].t_revol;
-					//set planet's revolving center
-					object_center = scene.getObjectById(planet[eAxis_pName[i]].centerobject, true); 		
-					planet[eAxis_pName[i]].axis_ecliptic.x.position.set(planet[eAxis_pName[i]].radius + planet[eAxis_pName[i]].distance * Math.cos(theta_revol + planet[eAxis_pName[i]].theta_init) + object_center.position.x, object_center.position.y, planet[eAxis_pName[i]].distance * Math.sin(-theta_revol - planet[eAxis_pName[i]].theta_init) + object_center.position.z);
-					planet[eAxis_pName[i]].axis_ecliptic.y.position.set(planet[eAxis_pName[i]].distance * Math.cos(theta_revol + planet[eAxis_pName[i]].theta_init) + object_center.position.x, planet[eAxis_pName[i]].radius + object_center.position.y, planet[eAxis_pName[i]].distance * Math.sin(-theta_revol - planet[eAxis_pName[i]].theta_init) + object_center.position.z);
-					planet[eAxis_pName[i]].axis_ecliptic.z.position.set(planet[eAxis_pName[i]].distance * Math.cos(theta_revol + planet[eAxis_pName[i]].theta_init) + object_center.position.x, object_center.position.y, planet[eAxis_pName[i]].radius + planet[eAxis_pName[i]].distance * Math.sin(-theta_revol - planet[eAxis_pName[i]].theta_init) + object_center.position.z);
+					planet[eAxis_pName[i]].axis_ecliptic.position.set(
+						planet[eAxis_pName[i]].object.position.x,
+						planet[eAxis_pName[i]].object.position.y, 
+						planet[eAxis_pName[i]].object.position.z);
 				}
 			}
 			//更新惯性坐标系姿态及位置 Refresh inertial coordinate frame's bearing & position
 			function refreshiAxes(){
-				var object_center;
-				var theta_revol;
 				for(var i in iAxis_pName){
-					theta_revol = count/planet[iAxis_pName[i]].t_revol;
-					//set planet's revolving center
-					object_center = scene.getObjectById(planet[iAxis_pName[i]].centerobject, true); 		
-					planet[iAxis_pName[i]].axis_inertial.x.rotation.set(0, 0, planet[iAxis_pName[i]].tilt + Math.PI/2, 'ZXY');
-					planet[iAxis_pName[i]].axis_inertial.y.rotation.set(0, 0, planet[iAxis_pName[i]].tilt, 'ZXY');
-					planet[iAxis_pName[i]].axis_inertial.z.rotation.set(Math.PI/2, planet[iAxis_pName[i]].tilt, 0, 'XYZ');
-					planet[iAxis_pName[i]].axis_inertial.x.position.set(planet[iAxis_pName[i]].radius * Math.cos(planet[iAxis_pName[i]].tilt) + planet[iAxis_pName[i]].object.position.x, 
-						planet[iAxis_pName[i]].radius * Math.sin(planet[iAxis_pName[i]].tilt) + planet[iAxis_pName[i]].object.position.y, 
-						planet[iAxis_pName[i]].object.position.z);
-					planet[iAxis_pName[i]].axis_inertial.y.position.set(-planet[iAxis_pName[i]].radius * Math.sin(planet[iAxis_pName[i]].tilt) + planet[iAxis_pName[i]].object.position.x, 
-						planet[iAxis_pName[i]].radius * Math.cos(planet[iAxis_pName[i]].tilt) + planet[iAxis_pName[i]].object.position.y, 
-						planet[iAxis_pName[i]].distance * Math.sin(-planet[iAxis_pName[i]].theta_init - theta_revol) + object_center.position.z);
-					planet[iAxis_pName[i]].axis_inertial.z.position.set(planet[iAxis_pName[i]].object.position.x, 
+					planet[iAxis_pName[i]].axis_inertial.position.set(
+						planet[iAxis_pName[i]].object.position.x, 
 						planet[iAxis_pName[i]].object.position.y, 
-						planet[iAxis_pName[i]].radius * Math.cos(planet[iAxis_pName[i]].tilt) + planet[iAxis_pName[i]].object.position.z);
+						planet[iAxis_pName[i]].object.position.z);
 				}
 			}
 			//更新固连坐标系姿态及位置 Refresh centered fixed coordinate frame's bearing & position
 			function refreshfAxes(){
-				var object_center;
-				var theta_revol;
 				var theta_rota;
 				for(var i in fAxis_pName){
 					theta_rota = count/planet[fAxis_pName[i]].t_rota;
-					theta_revol = count/planet[fAxis_pName[i]].t_revol;
-					//set planet's revolving center
-					object_center = scene.getObjectById(planet[fAxis_pName[i]].centerobject, true); 		
-					planet[fAxis_pName[i]].axis_fixed.x.rotation.set(theta_rota, 0, planet[fAxis_pName[i]].tilt + Math.PI/2, 'ZXY');
-					planet[fAxis_pName[i]].axis_fixed.y.rotation.set(0, 0, planet[fAxis_pName[i]].tilt, 'ZXY');
-					planet[fAxis_pName[i]].axis_fixed.z.rotation.set(Math.PI/2, planet[fAxis_pName[i]].tilt, -theta_rota, 'XYZ');
-					planet[fAxis_pName[i]].axis_fixed.x.position.set(planet[fAxis_pName[i]].radius * Math.cos(planet[fAxis_pName[i]].tilt) * Math.cos(theta_rota) + planet[fAxis_pName[i]].object.position.x, 
-						planet[fAxis_pName[i]].radius * Math.sin(planet[fAxis_pName[i]].tilt) * Math.cos(theta_rota) + planet[fAxis_pName[i]].object.position.y, 
-						-planet[fAxis_pName[i]].radius * Math.cos(planet[fAxis_pName[i]].tilt) * Math.sin(theta_rota) + planet[fAxis_pName[i]].object.position.z);
-					planet[fAxis_pName[i]].axis_fixed.y.position.set(-planet[fAxis_pName[i]].radius * Math.sin(planet[fAxis_pName[i]].tilt) + planet[fAxis_pName[i]].object.position.x, 
-						planet[fAxis_pName[i]].radius * Math.cos(planet[fAxis_pName[i]].tilt) + planet[fAxis_pName[i]].object.position.y, 
-						planet[fAxis_pName[i]].distance * Math.sin(-planet[fAxis_pName[i]].theta_init - theta_revol) + object_center.position.z);
-					planet[fAxis_pName[i]].axis_fixed.z.position.set(planet[fAxis_pName[i]].radius * Math.cos(planet[fAxis_pName[i]].tilt) * Math.sin(theta_rota) + planet[fAxis_pName[i]].object.position.x, 
-						planet[fAxis_pName[i]].radius * Math.sin(planet[fAxis_pName[i]].tilt) * Math.sin(theta_rota) + planet[fAxis_pName[i]].object.position.y, 
-						planet[fAxis_pName[i]].radius * Math.cos(planet[fAxis_pName[i]].tilt) * Math.cos(theta_rota) + planet[fAxis_pName[i]].object.position.z);
+					planet[fAxis_pName[i]].axis_fixed.rotation.set(0, theta_rota, planet[fAxis_pName[i]].tilt, 'ZXY');
+					planet[fAxis_pName[i]].axis_fixed.position.set(
+						planet[fAxis_pName[i]].object.position.x, 
+						planet[fAxis_pName[i]].object.position.y, 
+						planet[fAxis_pName[i]].object.position.z);
 				}
 			}
 			var count = 1;
