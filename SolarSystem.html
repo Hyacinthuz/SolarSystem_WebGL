@@ -154,6 +154,36 @@
 				planet["uranus"] 	= new Planet("uranus", 		"uranusmap.jpg", 	30, 	"sun", 		2700, 	164.79*365,		0.67125, 97.77/90*Math.PI/2,	190/90*Math.PI/2,		0);
 				planet["neptune"] 	= new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		3000, 	247.92*365, 	0.2488,	 28.32/90*Math.PI/2,	150/90*Math.PI/2,		0);	
 			}
+			function RequestWebService() {
+				//这是我们在第一步中创建的Web服务的地址
+				var URL = "http://192.168.3.133:8080/CXFService";
+				//在这处我们拼接
+				var data;
+				data = '<?xml version="1.0" encoding="utf-8"?>';
+				data = data + '<soap:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://cxf.com/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns1="http://schemas.xmlsoap.org/soap/http">';
+				data = data + '<soap:Body>';
+				data = data + '<sayHello xmlns="http://cxf.com/">';
+				data = data + '<Name>Taivas test</Name>';
+				data = data + '</sayHello>';
+				data = data + '</soap:Body>';
+				data = data + '</soap:Envelope>';
+				//创建异步对象
+				if (window.XMLHttpRequest)
+				{// code for IE7+, Firefox, Chrome, Opera, Safari
+					xmlhttp=new XMLHttpRequest();
+				}
+				else
+				{// code for IE6, IE5
+					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				xmlhttp.open("POST", URL, false);
+				//xmlhttp.setRequestHeader("Content-Type", "application/soap+xml");
+				xmlhttp.send(data);
+				if (xmlhttp.readyState==4 && xmlhttp.status==200)
+				{
+					document.getElementById('cWebService').innerHTML = xmlhttp.responseText;
+				}
+			}
 			function addPlanet(){
 				for(var i in planet){
 					scene.add(planet[i].object);
@@ -485,18 +515,20 @@
 				initMouseWheel();
 				initDrag();
 				setObject();
+				RequestWebService();
 				loop();
 			}
 		</script>
 	</head> 
 	<body onload="threeStart();">
 		<div id= "stats">States</div>
+		<div id="cWebService">here</div> 
 		<button id = "StatesOfSimulation", onClick="simulationState()">Start Simulation</button> 
 		<button id = "StatesOfPerspect", onClick="perspectState()">Static View</button> 
 		<button id = "PerspectReseter", onClick="resetPerspect()">Reset Perspect</button> 
 		<button id = "SpeedAdder", onClick="addSpeed()">Speed++</button> 
 		<button id = "SpeedSuber", onClick="subSpeed()">Speed--</button> 
-		<button id = "SpeedReseter", onClick="resetSpeed()">Reset Speed</button> 
+		<button id = "SpeedReseter", onClick="resetSpeed()">Reset Speed</button>
 		<div id="canvas-frame"></div>
 	</body>
 </html>
