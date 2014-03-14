@@ -156,17 +156,17 @@
 			}
 			function RequestWebService() {
 				//这是我们在第一步中创建的Web服务的地址
-				var URL = "http://192.168.3.133:8080/CXFService";
+				var URL = "http://localhost:8080/CXFService";
 				//在这处我们拼接
 				var data;
 				data = '<?xml version="1.0" encoding="utf-8"?>';
-				data = data + '<soap:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://cxf.com/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns1="http://schemas.xmlsoap.org/soap/http">';
-				data = data + '<soap:Body>';
-				data = data + '<sayHello xmlns="http://cxf.com/">';
-				data = data + '<Name>Taivas test</Name>';
-				data = data + '</sayHello>';
-				data = data + '</soap:Body>';
-				data = data + '</soap:Envelope>';
+				data += '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns="http://www.springframework.org/schema/beans" xmlns:jaxws="http://cxf.apache.org/jaxws" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd">';
+				data += '<soap:Body>';
+				data += '<m:sayHello xmlns:m="http://localhost:8080/CXFService/ServiceTest?wsdl">';
+				data += '<name xsi:type="xsd:string">Taivas</name>';
+				data += '</m:sayHello>';
+				data += '</soap:Body>';
+				data += '</soap:Envelope>';
 				//创建异步对象
 				if (window.XMLHttpRequest)
 				{// code for IE7+, Firefox, Chrome, Opera, Safari
@@ -176,12 +176,13 @@
 				{// code for IE6, IE5
 					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
 				}
-				xmlhttp.open("POST", URL, false);
-				//xmlhttp.setRequestHeader("Content-Type", "application/soap+xml");
+				xmlhttp.open("GET", URL, false);
+				xmlhttp.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+				xmlhttp.setRequestHeader("sayHello", "http://localhost:8080/CXFService/ServiceTest?wsdl");//方法名
 				xmlhttp.send(data);
 				if (xmlhttp.readyState==4 && xmlhttp.status==200)
 				{
-					document.getElementById('cWebService').innerHTML = xmlhttp.responseText;
+					document.getElementById('cWebService').innerHTML = ('"----' + xmlhttp.responseText+ '----"' + '   ' + xmlhttp.status + '   ' + xmlhttp.statusText);
 				}
 			}
 			function addPlanet(){
