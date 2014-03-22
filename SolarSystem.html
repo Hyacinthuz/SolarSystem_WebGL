@@ -141,22 +141,34 @@
 			//name of centered fixed coordinate frame planet
 			var fAxis_pName = ["earth"];
 			function initPlanet(){
-				planet = new Array();
-				//   				      	 	objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation， Axial tilt    		revo_init			 rota_init
-				planet["sun"] 		= new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		100000, 		1000000,	 7.25/90*Math.PI/2,		0,					0);
-				planet["mercury"] 	= new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		400, 	87.97, 			58.646,		 0/90*Math.PI/2,		40/90*Math.PI/2,	0);
-				planet["venus"] 	= new Planet("venus", 		"venusmap.jpg", 	30, 	"sun", 		600, 	224.7, 			-243,		 177.36/90*Math.PI/2,20/90*Math.PI/2,	 0);
-				planet["earth"] 	= new Planet("earth", 		"earthmap.jpg", 	50, 	"sun", 		900, 	365, 			0.99727, 23.26/90*Math.PI/2,	-20/90*Math.PI/2,		0);
-				planet["moon"] 		= new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	250, 	29.53, 			29.53,		 6.68/90*Math.PI/2,		190/90*Math.PI/2,	0);
-				planet["mars"] 		= new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		1300, 	686.93/2, 		1.0260,	 25.19/90*Math.PI/2,	5/90*Math.PI/2,			0);
-				planet["jupiter"] 	= new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		1600, 	11.5856*365,	0.41354, 3.13/90*Math.PI/2,		-65/90*Math.PI/2,		0);
-				planet["saturn"] 	= new Planet("saturn", 		"saturnmap.jpg", 	90, 	"sun", 		2200, 	29.448*365,		0.44401, 26.73/90*Math.PI/2,	45/90*Math.PI/2,		0);
-				planet["uranus"] 	= new Planet("uranus", 		"uranusmap.jpg", 	30, 	"sun", 		2700, 	164.79*365,		0.67125, 97.77/90*Math.PI/2,	190/90*Math.PI/2,		0);
-				planet["neptune"] 	= new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		3000, 	247.92*365, 	0.2488,	 28.32/90*Math.PI/2,	150/90*Math.PI/2,		0);	
+				planet = {
+				//   				objname, 		textname, 			rad, 	cent, 		dist, 	t_revolution, 	t_rotation， Axial tilt    		revo_init			 rota_init
+				"sun": 		new Planet("sun", 		"sunmap.jpg", 		80, 	"sun", 		0, 		100000, 		1000000,	 7.25/90*Math.PI/2,		0,					0),
+				"mercury": 	new Planet("mercury", 	"mercurymap.jpg", 	30, 	"sun", 		400, 	87.97, 			58.646,		 0/90*Math.PI/2,		40/90*Math.PI/2,	0),
+				"venus": 	new Planet("venus", 	"venusmap.jpg", 	30, 	"sun", 		600, 	224.7, 			-243,		 177.36/90*Math.PI/2,20/90*Math.PI/2,	 0),
+				"earth": 	new Planet("earth", 	"earthmap.jpg", 	50, 	"sun", 		900, 	365, 			0.99727, 23.26/90*Math.PI/2,	-20/90*Math.PI/2,		0),
+				"moon": 	new Planet("moon", 		"moonmap.jpg", 		25, 	"earth", 	250, 	29.53, 			29.53,		 6.68/90*Math.PI/2,		190/90*Math.PI/2,	0),
+				"mars": 	new Planet("mars", 		"marsmap.jpg", 		30, 	"sun", 		1300, 	686.93/2, 		1.0260,	 25.19/90*Math.PI/2,	5/90*Math.PI/2,			0),
+				"jupiter": 	new Planet("jupiter", 	"jupitermap.jpg", 	80, 	"sun", 		1600, 	11.5856*365,	0.41354, 3.13/90*Math.PI/2,		-65/90*Math.PI/2,		0),
+				"saturn": 	new Planet("saturn", 	"saturnmap.jpg", 	90, 	"sun", 		2200, 	29.448*365,		0.44401, 26.73/90*Math.PI/2,	45/90*Math.PI/2,		0),
+				"uranus": 	new Planet("uranus", 	"uranusmap.jpg", 	30, 	"sun", 		2700, 	164.79*365,		0.67125, 97.77/90*Math.PI/2,	190/90*Math.PI/2,		0),
+				"neptune": 	new Planet("neptune", 	"neptunemap.jpg", 	30, 	"sun", 		3000, 	247.92*365, 	0.2488,	 28.32/90*Math.PI/2,	150/90*Math.PI/2,		0)	
+				}
+			}
+			var xmlhttp=null;
+			//This function initializes XHR
+			function initXHR() {
+				//创建异步对象
+				if (window.XMLHttpRequest){// code for IE7+, Firefox, Chrome, Opera, Safari
+					xmlhttp=new XMLHttpRequest();
+				}
+				else{// code for IE6, IE5
+					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+				}
 			}
 			function RequestWebService() {
 				//这是我们在第一步中创建的Web服务的地址
-				var URL = "http://localhost:8080/CXFService";
+				var URL = "http://localhost:8080/CXFService/ServiceTest/sayHello";
 				//在这处我们拼接
 				var data;
 				data = '<?xml version="1.0" encoding="utf-8"?>';
@@ -167,23 +179,20 @@
 				data += '</m:sayHello>';
 				data += '</soap:Body>';
 				data += '</soap:Envelope>';
-				//创建异步对象
-				if (window.XMLHttpRequest)
-				{// code for IE7+, Firefox, Chrome, Opera, Safari
-					xmlhttp=new XMLHttpRequest();
-				}
-				else
-				{// code for IE6, IE5
-					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-				}
+				
 				xmlhttp.open("GET", URL, false);
-				xmlhttp.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
-				xmlhttp.setRequestHeader("sayHello", "http://localhost:8080/CXFService/ServiceTest?wsdl");//方法名
+				xmlhttp.setRequestHeader("Content-Type", "text/css");
+				xmlhttp.setRequestHeader("sayHello", "http://localhost:8080/CXFService/ServiceTest/sayHello");//方法名
 				xmlhttp.send(data);
-				if (xmlhttp.readyState==4 && xmlhttp.status==200)
-				{
-					document.getElementById('cWebService').innerHTML = ('"----' + xmlhttp.responseText+ '----"' + '   ' + xmlhttp.status + '   ' + xmlhttp.statusText);
+				
+				var URL = "http://localhost:8080/RESTfulService/restTest/HelloTest/sayHello/Taivas";
+				xmlhttp.open("GET", URL, false);
+				xmlhttp.onreadystatechange = function(){
+					if (xmlhttp.readyState==4 && xmlhttp.status==200){
+					document.getElementById('cWebService').innerHTML = ('"' + xmlhttp.responseText+ '"' + '   ' + xmlhttp.status + '   ' + xmlhttp.statusText);
+					}
 				}
+				xmlhttp.send(null);
 			}
 			function addPlanet(){
 				for(var i in planet){
@@ -508,6 +517,8 @@
 				window.requestAnimationFrame(loop);
 			}
 			function threeStart(){
+				parent.document.getElementById('iWebGL').style.height = document.body.offsetHeight + 'px';
+				initXHR();
 				initRender();
 				initScene();
 				initLight();

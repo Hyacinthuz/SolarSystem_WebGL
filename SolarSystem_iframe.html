@@ -1,10 +1,27 @@
+
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta charset="UTF-8">
-		<title>SolarSystem_iframe</title>
 	</head>
-	<body>
-		<iframe src="SolarSystem.html" width="1000" height="800" scrolling="Auto" frameborder="1" name="WebGL"></iframe>
-	</body>
+		<body>
+			<iframe src='SolarSystem.html' width='1000' height='100%' scrolling="no" frameborder='0' name="nWebGL" id="iWebGL" ></iframe>
+		</body>
 </html>
+
+<!--
+ref:http://hi.baidu.com/baiqqcom/item/51be97e9106096e7fb42ba59
+1. 该方法完美兼容IE6，7，8 ，Fire fox,chrome，opera 等主流的浏览器；
+2.同域，跨域皆支持；
+3.不调用任何JS脚本；
+注意三点.
+1. 文件开头不能是：
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+//指示 web 浏览器关于页面使用哪个 HTML 版本进行编写的指令，DTD是HTML4.01的语言规范，HTML5则不需要
+<html xmlns="http://www.w3.org/1999/xhtml">
+//命名空间，不影响
+必须 是<html>开头；否则不能完全显示。
+2. body样式中的 overflow: hidden; 绝对不对省略；否则会出现内外双滚动条。
+3.Iframe 中的 height='100%' 以及 滚动条不能设为no(默认是yes，不用设置即可)
+
+问题：使用“overflow:hidden”和“frameborder="1"属性则sofari浏览器会卡，
+-->
